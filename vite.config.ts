@@ -11,7 +11,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           mui: ["@mui/material"],
-          mathjs: ["mathjs"],
         },
       },
     },
