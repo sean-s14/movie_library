@@ -22,7 +22,9 @@ export default defineConfig({
       cert: fs.readFileSync("../.cert/cert.pem"),
     },
   },
-  plugins: [react(), removeConsole()],
+  plugins: [
+    react() /* removeConsole() TODO: Bring this back when project is complete*/,
+  ],
   resolve: {
     alias: [{ find: "src", replacement: path.resolve(__dirname, "src") }],
   },
