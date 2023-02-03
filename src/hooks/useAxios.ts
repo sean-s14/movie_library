@@ -29,7 +29,12 @@ const useAxios = () => {
 
   instance.interceptors.request.use(async (req: any) => {
     console.log("Interceptor Request :", req);
-    req.url += "?api_key=" + env.VITE_TMDB_API_KEY_V3;
+
+    // If the url already has parameters, use ? instead of &
+    const regex = new RegExp(/[\?]/g);
+    let seperator = regex.test(req.url) ? "&" : "?";
+    req.url += seperator + "api_key=" + env.VITE_TMDB_API_KEY_V3;
+
     return req;
   });
 

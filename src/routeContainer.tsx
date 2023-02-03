@@ -7,7 +7,7 @@ export default function RouteContainer(props: any) {
         mt: "70px",
         display: "flex",
         justifyContent: "center",
-        pt: 10,
+        py: 10,
         minHeight: "calc(100vh - 70px)",
         ...props.sx,
       }}

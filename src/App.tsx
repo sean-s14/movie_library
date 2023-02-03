@@ -1,16 +1,6 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useAxios } from "src/hooks/exports";
-import {
-  Paper,
-  Card,
-  CardMedia,
-  CardContent,
-  CardHeader,
-  Typography,
-} from "@mui/material";
-import Grid from "@mui/material/Unstable_Grid2";
-import RouteContainer from "./routeContainer";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { MovieList } from "src/routes/exports";
 import Navigator from "./navigator";
 
 interface IMovie {
@@ -31,59 +21,14 @@ interface IMovie {
 }
 
 function App() {
-  const api = useAxios();
-
-  const { data: movieData }: any = useQuery({
-    queryKey: ["movie_list"],
-    queryFn: getMovieList,
-  });
-
-  async function getMovieList() {
-    try {
-      const result = await api.get("/discover/movie");
-      return result?.data;
-    } catch (e: any) {
-      throw e.response.data.error;
-    }
-  }
-
   return (
-    <>
+    <BrowserRouter>
       <Navigator />
-      <RouteContainer>
-        <Grid container spacing={2} rowSpacing={6} disableEqualOverflow>
-          {movieData?.results?.map((movie: IMovie, index: number) => (
-            <Grid
-              key={index}
-              xs={4}
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-            >
-              <Paper elevation={12}>
-                <Card
-                  sx={{
-                    width: 185,
-                  }}
-                >
-                  <CardMedia
-                    component="img"
-                    src={`https://image.tmdb.org/t/p/w185/${movie.poster_path}`}
-                    alt={movie.title}
-                    height={277}
-                  />
-                  {/* <CardContent>
-                  <Typography>{movie.title}</Typography>
-                  <Typography>{movie.release_date}</Typography>
-                  <Typography>{movie.vote_average}</Typography>
-                </CardContent> */}
-                </Card>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-      </RouteContainer>
-    </>
+      <Routes>
+        <Route path="/:genre" element={<MovieList />} />
+        <Route path="/" element={<MovieList />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
