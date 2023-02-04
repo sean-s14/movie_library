@@ -10,6 +10,7 @@ import {
   CardHeader,
   Typography,
   Skeleton,
+  Pagination,
 } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import RouteContainer from "src/routeContainer";
@@ -41,12 +42,17 @@ function App() {
   const queryClient = useQueryClient();
   const api = useAxios();
   const { genre } = useParams();
+  const [pageNum, setPageNum] = useState(1);
 
   useEffect(() => {
     // console.log("genre :", genre);
     refetchMovideData();
   }, [genre]);
 
+  /**
+   * Retrieves array of genres from queryClient with hash ["movie", "genres"].
+   * Filter out the genre ID from the genres array using the 'genre' parameter.
+   */
   function getGenreId(): number | undefined {
     if (!genre) return undefined;
     const genres: { genres: IGenres[] } | undefined = queryClient.getQueryData([
@@ -64,28 +70,45 @@ function App() {
     refetch: refetchMovideData,
     isFetching: movideDataIsFetching,
   }: any = useQuery({
-    enabled: !!queryClient.getQueryData(["movie", "genres"]),
-    queryKey: ["movie", genre],
+    enabled: !!queryClient.getQueryData(["movie", "genres"]), // TODO: Explain Why
+    queryKey: ["movie", genre, pageNum],
     queryFn: getMovieList,
   });
 
   async function getMovieList() {
     const genreId = getGenreId();
     try {
-      let result;
       if (!genreId) {
-        result = await api.get("/discover/movie");
+        const result = await api.get("/discover/movie");
+        return result?.data;
       } else {
-        result = await api.get(`/discover/movie?with_genres=${genreId}`);
+        const result = await api.get(
+          `/discover/movie?with_genres=${genreId}&page=${pageNum}`
+        );
+        return result?.data;
       }
-      return result?.data;
     } catch (e: any) {
       throw e.response.data.error;
     }
   }
 
+  function handlePageNum(e: React.ChangeEvent<unknown>, value: number) {
+    setPageNum(value);
+  }
+
   return (
-    <RouteContainer>
+    <RouteContainer sx={{ flexDirection: "column", alignItems: "center" }}>
+      {/* Pagination */}
+      <Pagination
+        sx={{ mb: 5 }}
+        count={movieData?.total_pages}
+        page={pageNum}
+        variant="outlined"
+        shape="rounded"
+        onChange={handlePageNum}
+      />
+
+      {/* Movie List */}
       <Grid container spacing={2} rowSpacing={6} disableEqualOverflow>
         {movideDataIsFetching
           ? [1, 2, 3, 4, 5, 6, 7, 8].map((num, index) => (
@@ -157,6 +180,16 @@ function App() {
               </Grid>
             ))}
       </Grid>
+
+      {/* Pagination */}
+      <Pagination
+        sx={{ mt: 5 }}
+        count={movieData?.total_pages}
+        page={pageNum}
+        variant="outlined"
+        shape="rounded"
+        onChange={handlePageNum}
+      />
     </RouteContainer>
   );
 }
