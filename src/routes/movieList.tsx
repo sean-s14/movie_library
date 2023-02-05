@@ -11,8 +11,11 @@ import {
   Typography,
   Skeleton,
   Pagination,
+  Avatar,
+  CircularProgress,
 } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
+import { green, amber, red, grey } from "@mui/material/colors";
 import RouteContainer from "src/routeContainer";
 import { dateConverter } from "src/utils/exports";
 
@@ -45,7 +48,7 @@ function App() {
   const [pageNum, setPageNum] = useState(1);
 
   useEffect(() => {
-    // console.log("genre :", genre);
+    setPageNum(1); // This resets the page number whenever the user changes genre
     refetchMovideData();
   }, [genre]);
 
@@ -71,7 +74,7 @@ function App() {
     isFetching: movideDataIsFetching,
   }: any = useQuery({
     enabled: !!queryClient.getQueryData(["movie", "genres"]), // TODO: Explain Why
-    queryKey: ["movie", genre, pageNum],
+    queryKey: ["movie", genre || "discover", pageNum],
     queryFn: getMovieList,
   });
 
@@ -79,7 +82,7 @@ function App() {
     const genreId = getGenreId();
     try {
       if (!genreId) {
-        const result = await api.get("/discover/movie");
+        const result = await api.get(`/discover/movie?page=${pageNum}`);
         return result?.data;
       } else {
         const result = await api.get(
@@ -96,12 +99,31 @@ function App() {
     setPageNum(value);
   }
 
+  /**
+   * Used to calculate the color to use for the circular progress bar surrounding the movie rating
+   */
+  function calculateColor(movie: IMovie) {
+    if (movie?.vote_average) {
+      if (movie.vote_average > 8) {
+        return green[400];
+      } else if (movie.vote_average > 4) {
+        return amber[400];
+      } else {
+        return red[400];
+      }
+    } else {
+      return "grey";
+    }
+  }
+
   return (
-    <RouteContainer sx={{ flexDirection: "column", alignItems: "center" }}>
+    <RouteContainer
+      sx={{ flexDirection: "column", alignItems: "center", px: 5 }}
+    >
       {/* Pagination */}
       <Pagination
         sx={{ mb: 5 }}
-        count={movieData?.total_pages}
+        count={movieData?.total_pages || (movideDataIsFetching ? 10 : 1)}
         page={pageNum}
         variant="outlined"
         shape="rounded"
@@ -145,9 +167,13 @@ function App() {
           : movieData?.results?.map((movie: IMovie, index: number) => (
               <Grid
                 key={index}
-                xs={6}
-                sm={4}
+                xs={12}
+                xs475={6}
+                sm={6}
+                sm650={4}
+                sm750={4}
                 md={3}
+                md1050={2.4}
                 xl={2}
                 display="flex"
                 justifyContent="center"
@@ -165,12 +191,38 @@ function App() {
                       alt={movie.title}
                       height={277}
                     />
-                    <CardContent sx={{ height: 160 }}>
-                      <Typography>{movie.vote_average}</Typography>
-                      <Typography variant={"body1"} gutterBottom>
+                    <CardContent sx={{ height: 130 }}>
+                      <Avatar
+                        sx={{
+                          bgcolor: "black",
+                          mt: -5,
+                          color: "white",
+                          fontSize: 16,
+                          fontWeight: 700,
+                        }}
+                      >
+                        {movie.vote_average}
+                      </Avatar>
+                      <CircularProgress
+                        variant="determinate"
+                        size={38}
+                        sx={{
+                          ml: "1px",
+                          mt: "-39px",
+                          position: "absolute",
+                          color: () => calculateColor(movie),
+                        }}
+                        value={
+                          (movie?.vote_average && movie.vote_average * 10) || 0
+                        }
+                      />
+                      <Typography variant={"body1"} sx={{ mt: 1 }} gutterBottom>
                         {movie.title}
                       </Typography>
-                      <Typography variant={"subtitle2"}>
+                      <Typography
+                        variant={"subtitle2"}
+                        sx={{ color: grey[500] }}
+                      >
                         {movie.release_date &&
                           dateConverter(movie.release_date, true)}
                       </Typography>
@@ -184,7 +236,7 @@ function App() {
       {/* Pagination */}
       <Pagination
         sx={{ mt: 5 }}
-        count={movieData?.total_pages}
+        count={movieData?.total_pages || (movideDataIsFetching ? 10 : 1)}
         page={pageNum}
         variant="outlined"
         shape="rounded"
