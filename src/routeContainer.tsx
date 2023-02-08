@@ -28,6 +28,7 @@ export default function RouteContainer(props: any) {
           top: 450,
           margin: 30,
           zIndex: 0,
+          opacity: 0.6,
         }}
       />
       {props.children}

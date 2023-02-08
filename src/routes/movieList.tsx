@@ -5,6 +5,13 @@ import { useAxios } from "src/hooks/exports";
 import { useParams } from "react-router-dom";
 import {
   Paper,
+  Stack,
+  Box,
+  FormControl,
+  Select,
+  SelectChangeEvent,
+  Button,
+  MenuItem,
   Card,
   CardMedia,
   CardContent,
@@ -42,11 +49,39 @@ interface IMovie {
   vote_average?: number;
 }
 
+const sortOptions = [
+  {
+    title: "Popularity (desc)",
+    query: "popularity.desc",
+  },
+  {
+    title: "Popularity (asc)",
+    query: "popularity.asc",
+  },
+  {
+    title: "Release Date (desc)",
+    query: "release_date.desc",
+  },
+  {
+    title: "Release Date (asc)",
+    query: "release_date.asc",
+  },
+  {
+    title: "Title (desc)",
+    query: "original_title.desc",
+  },
+  {
+    title: "Title (asc)",
+    query: "original_title.asc",
+  },
+];
+
 function App() {
   const queryClient = useQueryClient();
   const api = useAxios();
   const { genre } = useParams();
   const [pageNum, setPageNum] = useState(1);
+  const [sort, setSort] = useState("popularity.desc");
 
   useEffect(() => {
     setPageNum(1); // This resets the page number whenever the user changes genre
@@ -57,6 +92,10 @@ function App() {
     // window.scrollTo(0, 0);
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" }); // Does'nt work on safari as of July 2021
   }, [pageNum]);
+
+  useEffect(() => {
+    console.log("Sort :", sort);
+  }, [sort]);
 
   /**
    * Retrieves array of genres from queryClient with hash ["movie", "genres"].
@@ -80,7 +119,7 @@ function App() {
     isFetching: movideDataIsFetching,
   }: any = useQuery({
     enabled: !!queryClient.getQueryData(["movie", "genres"]), // TODO: Explain Why
-    queryKey: ["movie", genre || "discover", pageNum],
+    queryKey: ["movie", genre || "discover", pageNum, sort],
     queryFn: getMovieList,
   });
 
@@ -92,7 +131,7 @@ function App() {
         return result?.data;
       } else {
         const result = await api.get(
-          `/discover/movie?with_genres=${genreId}&page=${pageNum}`
+          `/discover/movie?with_genres=${genreId}&page=${pageNum}&sort_by=${sort}`
         );
         return result?.data;
       }
@@ -103,6 +142,13 @@ function App() {
 
   function handlePageNum(e: React.ChangeEvent<unknown>, value: number) {
     setPageNum(value);
+  }
+
+  function handleSort(e: SelectChangeEvent) {
+    const val = e.target.value;
+    if (typeof val === "string") {
+      setSort(val);
+    }
   }
 
   /**
@@ -126,15 +172,52 @@ function App() {
     <RouteContainer
       sx={{ flexDirection: "column", alignItems: "center", px: 5 }}
     >
-      {/* Pagination */}
-      <Pagination
-        sx={{ mb: 5 }}
-        count={movieData?.total_pages || (movideDataIsFetching ? 10 : 1)}
-        page={pageNum}
-        variant="outlined"
-        shape="rounded"
-        onChange={handlePageNum}
-      />
+      <Stack
+        direction="row"
+        spacing={8}
+        sx={{
+          height: 40,
+          mb: 5,
+        }}
+      >
+        {/* Pagination */}
+        <Pagination
+          count={movieData?.total_pages || (movideDataIsFetching ? 10 : 1)}
+          page={pageNum}
+          variant="outlined"
+          shape="rounded"
+          onChange={handlePageNum}
+          size="large"
+          siblingCount={0}
+        />
+
+        {/* Sort & Filter */}
+        <Stack direction="row" spacing={2} sx={{ height: 40 }}>
+          {/* Sort */}
+          <FormControl
+            sx={{
+              minWidth: 150,
+            }}
+            size="small"
+          >
+            <Select
+              variant="outlined"
+              value={sort}
+              displayEmpty
+              onChange={handleSort}
+            >
+              {sortOptions?.map(({ title, query }, index) => (
+                <MenuItem key={index} value={query}>
+                  {title}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {/* Filter */}
+          <Button variant="outlined">Filter</Button>
+        </Stack>
+      </Stack>
 
       {/* Movie List */}
       <Grid container spacing={2} rowSpacing={6} disableEqualOverflow>
