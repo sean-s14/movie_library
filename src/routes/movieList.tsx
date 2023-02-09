@@ -7,10 +7,12 @@ import {
   Paper,
   Stack,
   Box,
+  Collapse,
   FormControl,
   Select,
   SelectChangeEvent,
   Button,
+  ToggleButton,
   MenuItem,
   Card,
   CardMedia,
@@ -49,6 +51,13 @@ interface IMovie {
   vote_average?: number;
 }
 
+interface ICert {
+  certification: string;
+  meaning: string;
+  order: number;
+  selected?: boolean;
+}
+
 const sortOptions = [
   {
     title: "Popularity (desc)",
@@ -82,10 +91,13 @@ function App() {
   const { genre } = useParams();
   const [pageNum, setPageNum] = useState(1);
   const [sort, setSort] = useState("popularity.desc");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [certChoices, setCertChoices] = useState<string[] | null>(null);
+  const [allFilters, setAllFilters] = useState<string[] | null>(null);
 
   useEffect(() => {
     setPageNum(1); // This resets the page number whenever the user changes genre
-    refetchMovideData();
+    refetchMovieData();
   }, [genre]);
 
   useEffect(() => {
@@ -94,8 +106,12 @@ function App() {
   }, [pageNum]);
 
   useEffect(() => {
-    console.log("Sort :", sort);
+    setPageNum(1);
   }, [sort]);
+
+  useEffect(() => {
+    setPageNum(1);
+  }, [certChoices]);
 
   /**
    * Retrieves array of genres from queryClient with hash ["movie", "genres"].
@@ -115,13 +131,41 @@ function App() {
 
   const {
     data: movieData,
-    refetch: refetchMovideData,
-    isFetching: movideDataIsFetching,
+    refetch: refetchMovieData,
+    isFetching: movieDataIsFetching,
   }: any = useQuery({
     enabled: !!queryClient.getQueryData(["movie", "genres"]), // TODO: Explain Why
-    queryKey: ["movie", genre || "discover", pageNum, sort],
+    queryKey: ["movie", genre || "discover", pageNum, sort, allFilters],
     queryFn: getMovieList,
   });
+
+  const { data: certificationData }: any = useQuery({
+    queryKey: ["certifications"],
+    queryFn: getCertificationList,
+    cacheTime: Infinity,
+    staleTime: Infinity,
+    onSuccess: (data) => {
+      let gb_certifications = data?.certifications["GB"];
+      gb_certifications?.sort(
+        (obj1: ICert, obj2: ICert) => obj1.order - obj2.order
+      );
+      gb_certifications = gb_certifications?.map((item: ICert) => {
+        item.selected = false;
+        return item;
+      });
+      console.log("GB Certifications :", gb_certifications);
+      queryClient.setQueryData(["certifications"], gb_certifications);
+    },
+  });
+
+  async function getCertificationList() {
+    try {
+      const result = await api.get("/certification/movie/list");
+      return result?.data;
+    } catch (e: any) {
+      throw e.response.data.error;
+    }
+  }
 
   async function getMovieList() {
     const genreId = getGenreId();
@@ -130,9 +174,14 @@ function App() {
         const result = await api.get(`/discover/movie?page=${pageNum}`);
         return result?.data;
       } else {
-        const result = await api.get(
-          `/discover/movie?with_genres=${genreId}&page=${pageNum}&sort_by=${sort}`
-        );
+        let query = `/discover/movie?with_genres=${genreId}&page=${pageNum}&sort_by=${sort}`;
+        if (certChoices !== null) {
+          query +=
+            `&certification_country=GB` +
+            `&certification=${certChoices.join("|")}`;
+        }
+        console.log("Query :", query);
+        const result = await api.get(query);
         return result?.data;
       }
     } catch (e: any) {
@@ -149,6 +198,10 @@ function App() {
     if (typeof val === "string") {
       setSort(val);
     }
+  }
+
+  function handleFilterOpen() {
+    setFilterOpen((prev) => !prev);
   }
 
   /**
@@ -168,10 +221,80 @@ function App() {
     }
   }
 
+  function handleCertificationOptions(e: any, newAlignment: string | null) {
+    queryClient.setQueryData(["certifications"], (data: any) => {
+      if (!data) return data;
+
+      // ===== Modify data to invert selected option =====
+      let dataClone = JSON.parse(JSON.stringify(data));
+      dataClone = dataClone?.map((item: ICert) => {
+        if (item.certification === newAlignment) {
+          item.selected = !item.selected;
+        }
+        return item;
+      });
+      console.log("Data Clone :", dataClone);
+
+      // ===== Get the selected certifications and pass them to certChoices =====
+      let selected = dataClone.reduce((prev: string[], obj: ICert) => {
+        if (obj.selected) {
+          prev.push(obj.certification);
+        }
+        return prev;
+      }, []);
+      console.log("Selected :", selected);
+      if (selected.length < 1) {
+        setCertChoices(null);
+      } else {
+        setCertChoices(selected);
+      }
+
+      return dataClone;
+    });
+  }
+
+  function searchWithFilters() {
+    setAllFilters(certChoices);
+  }
+
   return (
     <RouteContainer
       sx={{ flexDirection: "column", alignItems: "center", px: 5 }}
     >
+      {/* Filter Options */}
+      <Collapse in={filterOpen}>
+        <Box
+          sx={{
+            height: 150,
+          }}
+        >
+          <Stack spacing={2} direction="row">
+            {certificationData?.map(
+              ({ certification, selected }: ICert, index: number) => (
+                <ToggleButton
+                  key={index}
+                  value={certification}
+                  selected={selected}
+                  onChange={handleCertificationOptions}
+                  sx={{
+                    width: 50,
+                  }}
+                >
+                  {certification}
+                </ToggleButton>
+              )
+            )}
+          </Stack>
+          <Button
+            sx={{ mt: 2, width: "100%" }}
+            variant="outlined"
+            onClick={searchWithFilters}
+          >
+            Search
+          </Button>
+        </Box>
+      </Collapse>
+
       <Stack
         direction="row"
         spacing={8}
@@ -182,7 +305,7 @@ function App() {
       >
         {/* Pagination */}
         <Pagination
-          count={movieData?.total_pages || (movideDataIsFetching ? 10 : 1)}
+          count={movieData?.total_pages || (movieDataIsFetching ? 10 : 1)}
           page={pageNum}
           variant="outlined"
           shape="rounded"
@@ -215,13 +338,15 @@ function App() {
           </FormControl>
 
           {/* Filter */}
-          <Button variant="outlined">Filter</Button>
+          <Button variant="outlined" onClick={handleFilterOpen}>
+            Filter
+          </Button>
         </Stack>
       </Stack>
 
       {/* Movie List */}
       <Grid container spacing={2} rowSpacing={6} disableEqualOverflow>
-        {movideDataIsFetching
+        {movieDataIsFetching
           ? [...new Uint8Array(20)].map((num, index) => (
               <Grid
                 key={index}
@@ -348,7 +473,7 @@ function App() {
       {/* Pagination */}
       <Pagination
         sx={{ mt: 5 }}
-        count={movieData?.total_pages || (movideDataIsFetching ? 10 : 1)}
+        count={movieData?.total_pages || (movieDataIsFetching ? 10 : 1)}
         page={pageNum}
         variant="outlined"
         shape="rounded"
