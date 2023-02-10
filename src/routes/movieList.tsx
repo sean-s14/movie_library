@@ -9,6 +9,7 @@ import {
   Box,
   Collapse,
   FormControl,
+  FormControlLabel,
   Select,
   SelectChangeEvent,
   Button,
@@ -23,6 +24,8 @@ import {
   Pagination,
   Avatar,
   CircularProgress,
+  TextField,
+  Divider,
 } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import { green, amber, red, grey } from "@mui/material/colors";
@@ -263,11 +266,16 @@ function App() {
     >
       {/* Filter Options */}
       <Collapse in={filterOpen}>
-        <Box
+        <Stack
+          spacing={2}
           sx={{
-            height: 150,
+            height: 350,
           }}
         >
+          {/* Age Certification */}
+          <Typography sx={{ letterSpacing: 1, textAlign: "center" }}>
+            Age Certification
+          </Typography>
           <Stack spacing={2} direction="row">
             {certificationData?.map(
               ({ certification, selected }: ICert, index: number) => (
@@ -285,14 +293,67 @@ function App() {
               )
             )}
           </Stack>
-          <Button
-            sx={{ mt: 2, width: "100%" }}
-            variant="outlined"
-            onClick={searchWithFilters}
-          >
+
+          <Divider sx={{ m: 2 }} />
+
+          {/* Release Date */}
+          <Typography sx={{ letterSpacing: 1, textAlign: "center" }}>
+            Release Date
+          </Typography>
+          <Stack spacing={2} direction="row">
+            <FormControlLabel
+              // value="start"
+              label="on"
+              labelPlacement="start"
+              control={
+                <TextField
+                  type="number"
+                  placeholder="2020"
+                  sx={{ width: 90, mx: 1 }}
+                  size="small"
+                  inputProps={{ min: 1874, max: 2023 }}
+                />
+              }
+            />
+            <Divider orientation="vertical" sx={{ height: 80 }}>
+              OR
+            </Divider>
+
+            <FormControlLabel
+              // value="start"
+              label="from"
+              labelPlacement="start"
+              control={
+                <TextField
+                  type="number"
+                  placeholder="2006"
+                  sx={{ width: 90, ml: 1 }}
+                  size="small"
+                  inputProps={{ min: 1874, max: 2023 }}
+                />
+              }
+            />
+            <FormControlLabel
+              // value="start"
+              label="to"
+              labelPlacement="start"
+              control={
+                <TextField
+                  type="number"
+                  placeholder="2012"
+                  sx={{ width: 90, ml: 1 }}
+                  size="small"
+                  inputProps={{ min: 1874, max: 2023 }}
+                />
+              }
+            />
+          </Stack>
+
+          {/* Search Button */}
+          <Button fullWidth variant="outlined" onClick={searchWithFilters}>
             Search
           </Button>
-        </Box>
+        </Stack>
       </Collapse>
 
       <Stack
