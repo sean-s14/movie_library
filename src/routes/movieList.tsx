@@ -31,6 +31,7 @@ import Grid from "@mui/material/Unstable_Grid2";
 import { green, amber, red, grey } from "@mui/material/colors";
 import RouteContainer from "src/routeContainer";
 import { dateConverter } from "src/utils/exports";
+import { release } from "os";
 
 interface IGenres {
   id: number;
@@ -88,6 +89,12 @@ const sortOptions = [
   },
 ];
 
+interface IReleaseDate {
+  on?: string;
+  from?: string;
+  to?: string;
+}
+
 function App() {
   const queryClient = useQueryClient();
   const api = useAxios();
@@ -96,7 +103,8 @@ function App() {
   const [sort, setSort] = useState("popularity.desc");
   const [filterOpen, setFilterOpen] = useState(false);
   const [certChoices, setCertChoices] = useState<string[] | null>(null);
-  const [allFilters, setAllFilters] = useState<string[] | null>(null);
+  const [releaseDate, setReleaseDate] = useState<IReleaseDate | null>(null);
+  const [allFilters, setAllFilters] = useState<any[] | null>(null);
 
   useEffect(() => {
     setPageNum(1); // This resets the page number whenever the user changes genre
@@ -112,9 +120,13 @@ function App() {
     setPageNum(1);
   }, [sort]);
 
+  // useEffect(() => {
+  //   setPageNum(1);
+  // }, [certChoices]);
+
   useEffect(() => {
-    setPageNum(1);
-  }, [certChoices]);
+    console.log("Release Date:", releaseDate);
+  }, [releaseDate]);
 
   /**
    * Retrieves array of genres from queryClient with hash ["movie", "genres"].
@@ -142,24 +154,25 @@ function App() {
     queryFn: getMovieList,
   });
 
-  const { data: certificationData }: any = useQuery({
-    queryKey: ["certifications"],
-    queryFn: getCertificationList,
-    cacheTime: Infinity,
-    staleTime: Infinity,
-    onSuccess: (data) => {
-      let gb_certifications = data?.certifications["GB"];
-      gb_certifications?.sort(
-        (obj1: ICert, obj2: ICert) => obj1.order - obj2.order
-      );
-      gb_certifications = gb_certifications?.map((item: ICert) => {
-        item.selected = false;
-        return item;
-      });
-      console.log("GB Certifications :", gb_certifications);
-      queryClient.setQueryData(["certifications"], gb_certifications);
-    },
-  });
+  const { data: certificationData, isLoading: certDataIsLoading }: any =
+    useQuery({
+      queryKey: ["certifications"],
+      queryFn: getCertificationList,
+      cacheTime: Infinity,
+      staleTime: Infinity,
+      onSuccess: (data) => {
+        let gb_certifications = data?.certifications["GB"];
+        gb_certifications?.sort(
+          (obj1: ICert, obj2: ICert) => obj1.order - obj2.order
+        );
+        gb_certifications = gb_certifications?.map((item: ICert) => {
+          item.selected = false;
+          return item;
+        });
+        console.log("GB Certifications :", gb_certifications);
+        queryClient.setQueryData(["certifications"], gb_certifications);
+      },
+    });
 
   async function getCertificationList() {
     try {
@@ -173,20 +186,45 @@ function App() {
   async function getMovieList() {
     const genreId = getGenreId();
     try {
-      if (!genreId) {
-        const result = await api.get(`/discover/movie?page=${pageNum}`);
-        return result?.data;
-      } else {
-        let query = `/discover/movie?with_genres=${genreId}&page=${pageNum}&sort_by=${sort}`;
-        if (certChoices !== null) {
-          query +=
-            `&certification_country=GB` +
-            `&certification=${certChoices.join("|")}`;
-        }
-        console.log("Query :", query);
-        const result = await api.get(query);
-        return result?.data;
+      let query = `/discover/movie?page=${pageNum}&sort_by=${sort}`;
+
+      if (genreId) {
+        query += "&with_genres=" + genreId;
       }
+
+      if (certChoices !== null) {
+        query +=
+          `&certification_country=GB` +
+          `&certification=${certChoices.join("|")}`;
+      }
+
+      if (releaseDate !== null) {
+        if (releaseDate.hasOwnProperty("on")) {
+          if (typeof releaseDate["on"] === "string") {
+            if (releaseDate["on"].length > 0) {
+              query += "&primary_release_year=" + releaseDate["on"];
+            }
+          }
+        }
+        if (releaseDate.hasOwnProperty("from")) {
+          if (typeof releaseDate["from"] === "string") {
+            if (releaseDate["from"].length > 0) {
+              query += "&primary_release_date.gte=" + releaseDate["from"];
+            }
+          }
+        }
+        if (releaseDate.hasOwnProperty("to")) {
+          if (typeof releaseDate["to"] === "string") {
+            if (releaseDate["to"].length > 0) {
+              query += "&primary_release_date.lte=" + releaseDate["to"];
+            }
+          }
+        }
+      }
+
+      console.log("Query :", query);
+      const result = await api.get(query);
+      return result?.data;
     } catch (e: any) {
       throw e.response.data.error;
     }
@@ -224,7 +262,7 @@ function App() {
     }
   }
 
-  function handleCertificationOptions(e: any, newAlignment: string | null) {
+  function handleCertificationChoices(e: any, newAlignment: string | null) {
     queryClient.setQueryData(["certifications"], (data: any) => {
       if (!data) return data;
 
@@ -256,8 +294,17 @@ function App() {
     });
   }
 
+  /** Executed when clicking the search button for filters */
   function searchWithFilters() {
-    setAllFilters(certChoices);
+    setAllFilters([certChoices, releaseDate]);
+  }
+
+  function handleReleaseDate(
+    e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
+  ) {
+    const val = e.target.value; // captures 2012
+    const prop = e.target.name.split("-")[2]; // captures 'on' in 'release-date-on'
+    setReleaseDate((prev) => ({ ...prev, [prop]: val }));
   }
 
   return (
@@ -276,23 +323,25 @@ function App() {
           <Typography sx={{ letterSpacing: 1, textAlign: "center" }}>
             Age Certification
           </Typography>
-          <Stack spacing={2} direction="row">
-            {certificationData?.map(
-              ({ certification, selected }: ICert, index: number) => (
-                <ToggleButton
-                  key={index}
-                  value={certification}
-                  selected={selected}
-                  onChange={handleCertificationOptions}
-                  sx={{
-                    width: 50,
-                  }}
-                >
-                  {certification}
-                </ToggleButton>
-              )
-            )}
-          </Stack>
+          {!certDataIsLoading && (
+            <Stack spacing={2} direction="row">
+              {certificationData?.map(
+                ({ certification, selected }: ICert, index: number) => (
+                  <ToggleButton
+                    key={index}
+                    value={certification}
+                    selected={selected}
+                    onChange={handleCertificationChoices}
+                    sx={{
+                      width: 50,
+                    }}
+                  >
+                    {certification}
+                  </ToggleButton>
+                )
+              )}
+            </Stack>
+          )}
 
           <Divider sx={{ m: 2 }} />
 
@@ -312,6 +361,8 @@ function App() {
                   sx={{ width: 90, mx: 1 }}
                   size="small"
                   inputProps={{ min: 1874, max: 2023 }}
+                  onChange={handleReleaseDate}
+                  name="release-date-on"
                 />
               }
             />
@@ -330,6 +381,8 @@ function App() {
                   sx={{ width: 90, ml: 1 }}
                   size="small"
                   inputProps={{ min: 1874, max: 2023 }}
+                  onChange={handleReleaseDate}
+                  name="release-date-from"
                 />
               }
             />
@@ -344,6 +397,8 @@ function App() {
                   sx={{ width: 90, ml: 1 }}
                   size="small"
                   inputProps={{ min: 1874, max: 2023 }}
+                  onChange={handleReleaseDate}
+                  name="release-date-to"
                 />
               }
             />
