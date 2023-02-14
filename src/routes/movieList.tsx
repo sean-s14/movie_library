@@ -95,6 +95,11 @@ interface IReleaseDate {
   to?: string;
 }
 
+interface IRating {
+  min?: string;
+  max?: string;
+}
+
 function App() {
   const queryClient = useQueryClient();
   const api = useAxios();
@@ -104,6 +109,7 @@ function App() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [certChoices, setCertChoices] = useState<string[] | null>(null);
   const [releaseDate, setReleaseDate] = useState<IReleaseDate | null>(null);
+  const [rating, setRating] = useState<IRating | null>(null);
   const [allFilters, setAllFilters] = useState<any[] | null>(null);
 
   useEffect(() => {
@@ -154,25 +160,28 @@ function App() {
     queryFn: getMovieList,
   });
 
-  const { data: certificationData, isLoading: certDataIsLoading }: any =
-    useQuery({
-      queryKey: ["certifications"],
-      queryFn: getCertificationList,
-      cacheTime: Infinity,
-      staleTime: Infinity,
-      onSuccess: (data) => {
-        let gb_certifications = data?.certifications["GB"];
-        gb_certifications?.sort(
-          (obj1: ICert, obj2: ICert) => obj1.order - obj2.order
-        );
-        gb_certifications = gb_certifications?.map((item: ICert) => {
-          item.selected = false;
-          return item;
-        });
-        console.log("GB Certifications :", gb_certifications);
-        queryClient.setQueryData(["certifications"], gb_certifications);
-      },
-    });
+  const {
+    data: certificationData,
+    isLoading: certDataIsLoading,
+    isFetching: certDataIsFetching,
+  }: any = useQuery({
+    queryKey: ["certifications"],
+    queryFn: getCertificationList,
+    cacheTime: Infinity,
+    staleTime: Infinity,
+    onSuccess: (data) => {
+      let gb_certifications = data?.certifications["GB"];
+      gb_certifications?.sort(
+        (obj1: ICert, obj2: ICert) => obj1.order - obj2.order
+      );
+      gb_certifications = gb_certifications?.map((item: ICert) => {
+        item.selected = false;
+        return item;
+      });
+      console.log("GB Certifications :", gb_certifications);
+      queryClient.setQueryData(["certifications"], gb_certifications);
+    },
+  });
 
   async function getCertificationList() {
     try {
@@ -217,6 +226,23 @@ function App() {
           if (typeof releaseDate["to"] === "string") {
             if (releaseDate["to"].length > 0) {
               query += "&primary_release_date.lte=" + releaseDate["to"];
+            }
+          }
+        }
+      }
+
+      if (rating !== null) {
+        if (rating.hasOwnProperty("min")) {
+          if (typeof rating["min"] === "string") {
+            if (rating["min"].length > 0) {
+              query += "&vote_average.gte=" + rating["min"];
+            }
+          }
+        }
+        if (rating.hasOwnProperty("max")) {
+          if (typeof rating["max"] === "string") {
+            if (rating["max"].length > 0) {
+              query += "&vote_average.lte=" + rating["max"];
             }
           }
         }
@@ -296,7 +322,7 @@ function App() {
 
   /** Executed when clicking the search button for filters */
   function searchWithFilters() {
-    setAllFilters([certChoices, releaseDate]);
+    setAllFilters([certChoices, releaseDate, rating]);
   }
 
   function handleReleaseDate(
@@ -307,23 +333,31 @@ function App() {
     setReleaseDate((prev) => ({ ...prev, [prop]: val }));
   }
 
+  function handleRating(
+    e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
+  ) {
+    const val = e.target.value; // captures 2012
+    const prop = e.target.name.split("-")[1]; // captures 'on' in 'release-date-on'
+    setRating((prev) => ({ ...prev, [prop]: val }));
+  }
+
   return (
     <RouteContainer
       sx={{ flexDirection: "column", alignItems: "center", px: 5 }}
     >
       {/* Filter Options */}
-      <Collapse in={filterOpen}>
+      <Collapse in={filterOpen} sx={{ zIndex: 1 }}>
         <Stack
           spacing={2}
           sx={{
-            height: 350,
+            height: 460,
           }}
         >
           {/* Age Certification */}
           <Typography sx={{ letterSpacing: 1, textAlign: "center" }}>
             Age Certification
           </Typography>
-          {!certDataIsLoading && (
+          {!certDataIsFetching && (
             <Stack spacing={2} direction="row">
               {certificationData?.map(
                 ({ certification, selected }: ICert, index: number) => (
@@ -357,7 +391,7 @@ function App() {
               control={
                 <TextField
                   type="number"
-                  placeholder="2020"
+                  placeholder="????"
                   sx={{ width: 90, mx: 1 }}
                   size="small"
                   inputProps={{ min: 1874, max: 2023 }}
@@ -377,7 +411,7 @@ function App() {
               control={
                 <TextField
                   type="number"
-                  placeholder="2006"
+                  placeholder="????"
                   sx={{ width: 90, ml: 1 }}
                   size="small"
                   inputProps={{ min: 1874, max: 2023 }}
@@ -393,7 +427,7 @@ function App() {
               control={
                 <TextField
                   type="number"
-                  placeholder="2012"
+                  placeholder="????"
                   sx={{ width: 90, ml: 1 }}
                   size="small"
                   inputProps={{ min: 1874, max: 2023 }}
@@ -404,8 +438,54 @@ function App() {
             />
           </Stack>
 
+          <Divider sx={{ m: 2 }} />
+
+          {/* Rating */}
+          <Typography sx={{ letterSpacing: 1, textAlign: "center" }}>
+            Rating
+          </Typography>
+          <Stack spacing={2} direction="row" justifyContent="space-evenly">
+            <FormControlLabel
+              // value="start"
+              label="min"
+              labelPlacement="start"
+              control={
+                <TextField
+                  type="number"
+                  placeholder="0.0"
+                  sx={{ width: 90, ml: 1 }}
+                  size="small"
+                  inputProps={{ min: 0, max: 10, step: 0.1 }}
+                  onChange={handleRating}
+                  name="rating-min"
+                />
+              }
+            />
+            <FormControlLabel
+              // value="start"
+              label="max"
+              labelPlacement="start"
+              control={
+                <TextField
+                  type="number"
+                  placeholder="0.0"
+                  sx={{ width: 90, ml: 1 }}
+                  size="small"
+                  inputProps={{ min: 0, max: 10, step: 0.1 }}
+                  onChange={handleRating}
+                  name="rating-max"
+                />
+              }
+            />
+          </Stack>
+
           {/* Search Button */}
-          <Button fullWidth variant="outlined" onClick={searchWithFilters}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={searchWithFilters}
+            sx={{ mt: "40px !important" }}
+          >
             Search
           </Button>
         </Stack>
