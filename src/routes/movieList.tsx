@@ -72,6 +72,14 @@ const sortOptions = [
     query: "popularity.asc",
   },
   {
+    title: "Vote Average (desc)",
+    query: "vote_average.desc",
+  },
+  {
+    title: "Vote Average (asc)",
+    query: "vote_average.asc",
+  },
+  {
     title: "Release Date (desc)",
     query: "release_date.desc",
   },
