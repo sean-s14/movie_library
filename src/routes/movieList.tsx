@@ -2,7 +2,7 @@ import "./movieList.css";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAxios } from "src/hooks/exports";
-import { useParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   Paper,
   Stack,
@@ -31,7 +31,6 @@ import Grid from "@mui/material/Unstable_Grid2";
 import { green, amber, red, grey } from "@mui/material/colors";
 import RouteContainer from "src/routeContainer";
 import { dateConverter } from "src/utils/exports";
-import { release } from "os";
 
 interface IGenres {
   id: number;
@@ -111,7 +110,7 @@ interface IRating {
 function App() {
   const queryClient = useQueryClient();
   const api = useAxios();
-  const { genre } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [pageNum, setPageNum] = useState(1);
   const [sort, setSort] = useState("popularity.desc");
   const [filterOpen, setFilterOpen] = useState(false);
@@ -121,42 +120,21 @@ function App() {
   const [allFilters, setAllFilters] = useState<any[] | null>(null);
 
   useEffect(() => {
-    setPageNum(1); // This resets the page number whenever the user changes genre
-    refetchMovieData();
-  }, [genre]);
-
-  useEffect(() => {
     // window.scrollTo(0, 0);
-    window.scrollTo({ top: 0, left: 0, behavior: "smooth" }); // Does'nt work on safari as of July 2021
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" }); // Doesn't work on safari as of July 2021
   }, [pageNum]);
 
   useEffect(() => {
     setPageNum(1);
   }, [sort]);
 
-  // useEffect(() => {
-  //   setPageNum(1);
-  // }, [certChoices]);
-
   useEffect(() => {
     console.log("Release Date:", releaseDate);
   }, [releaseDate]);
 
-  /**
-   * Retrieves array of genres from queryClient with hash ["movie", "genres"].
-   * Filter out the genre ID from the genres array using the 'genre' parameter.
-   */
-  function getGenreId(): number | undefined {
-    if (!genre) return undefined;
-    const genres: { genres: IGenres[] } | undefined = queryClient.getQueryData([
-      "movie",
-      "genres",
-    ]);
-    const genreId = genres?.genres.filter(
-      (movie: IGenres) => movie.name.toLowerCase() === genre
-    )[0].id;
-    return genreId;
-  }
+  useEffect(() => {
+    console.log("With Genres:", searchParams.get("with_genres"));
+  }, [searchParams.get("with_genres")]);
 
   const {
     data: movieData,
@@ -164,7 +142,8 @@ function App() {
     isFetching: movieDataIsFetching,
   }: any = useQuery({
     enabled: !!queryClient.getQueryData(["movie", "genres"]), // TODO: Explain Why
-    queryKey: ["movie", genre || "discover", pageNum, sort, allFilters],
+    // queryKey: ["movie", genre || "discover", pageNum, sort, allFilters],
+    queryKey: ["movie", ...searchParams.entries()],
     queryFn: getMovieList,
   });
 
@@ -201,58 +180,13 @@ function App() {
   }
 
   async function getMovieList() {
-    const genreId = getGenreId();
     try {
-      let query = `/discover/movie?page=${pageNum}&sort_by=${sort}`;
-
-      if (genreId) {
-        query += "&with_genres=" + genreId;
-      }
-
-      if (certChoices !== null) {
-        query +=
-          `&certification_country=GB` +
-          `&certification=${certChoices.join("|")}`;
-      }
-
-      if (releaseDate !== null) {
-        if (releaseDate.hasOwnProperty("on")) {
-          if (typeof releaseDate["on"] === "string") {
-            if (releaseDate["on"].length > 0) {
-              query += "&primary_release_year=" + releaseDate["on"];
-            }
-          }
-        }
-        if (releaseDate.hasOwnProperty("from")) {
-          if (typeof releaseDate["from"] === "string") {
-            if (releaseDate["from"].length > 0) {
-              query += "&primary_release_date.gte=" + releaseDate["from"];
-            }
-          }
-        }
-        if (releaseDate.hasOwnProperty("to")) {
-          if (typeof releaseDate["to"] === "string") {
-            if (releaseDate["to"].length > 0) {
-              query += "&primary_release_date.lte=" + releaseDate["to"];
-            }
-          }
-        }
-      }
-
-      if (rating !== null) {
-        if (rating.hasOwnProperty("min")) {
-          if (typeof rating["min"] === "string") {
-            if (rating["min"].length > 0) {
-              query += "&vote_average.gte=" + rating["min"];
-            }
-          }
-        }
-        if (rating.hasOwnProperty("max")) {
-          if (typeof rating["max"] === "string") {
-            if (rating["max"].length > 0) {
-              query += "&vote_average.lte=" + rating["max"];
-            }
-          }
+      let query = `discover/movie`;
+      let first = true;
+      for (const [key, val] of searchParams.entries()) {
+        query += `${first ? "?" : "&"}${key}=${val}`;
+        if (first) {
+          first = false;
         }
       }
 
@@ -266,12 +200,20 @@ function App() {
 
   function handlePageNum(e: React.ChangeEvent<unknown>, value: number) {
     setPageNum(value);
+    setSearchParams((prev) => ({
+      ...Object.fromEntries(prev.entries()),
+      page: value.toString(),
+    }));
   }
 
   function handleSort(e: SelectChangeEvent) {
-    const val = e.target.value;
-    if (typeof val === "string") {
-      setSort(val);
+    const value = e.target.value;
+    if (typeof value === "string") {
+      setSort(value);
+      setSearchParams((prev) => ({
+        ...Object.fromEntries(prev.entries()),
+        sort_by: value.toString(),
+      }));
     }
   }
 
@@ -330,7 +272,86 @@ function App() {
 
   /** Executed when clicking the search button for filters */
   function searchWithFilters() {
+    interface IFilterObject {
+      "vote_average.gte"?: string;
+      "vote_average.lte"?: string;
+      primary_release_year?: string;
+      "primary_release_date.gte"?: string;
+      "primary_release_date.lte"?: string;
+      certification_country?: string;
+      certification?: string;
+    }
+    const filter_object: IFilterObject = {};
+
     setAllFilters([certChoices, releaseDate, rating]);
+    setSearchParams((prev) => {
+      let new_obj = Object.fromEntries(prev.entries());
+
+      // Rating
+      if (rating !== null) {
+        if (
+          rating.hasOwnProperty("min") &&
+          typeof rating["min"] === "string" &&
+          rating["min"].length > 0 &&
+          parseFloat(rating["min"]) > 0
+        ) {
+          filter_object["vote_average.gte"] = rating["min"];
+        } else {
+          if (new_obj.hasOwnProperty("vote_average.gte")) {
+            delete new_obj["vote_average.gte"];
+          }
+        }
+
+        if (
+          rating.hasOwnProperty("max") &&
+          typeof rating["max"] === "string" &&
+          rating["max"].length > 0 &&
+          parseFloat(rating["max"]) > 0
+        ) {
+          filter_object["vote_average.lte"] = rating["max"];
+        } else {
+          if (new_obj.hasOwnProperty("vote_average.lte")) {
+            delete new_obj["vote_average.lte"];
+          }
+        }
+      }
+
+      // Release Date
+      if (releaseDate !== null) {
+        if (releaseDate.hasOwnProperty("on")) {
+          if (typeof releaseDate["on"] === "string") {
+            if (releaseDate["on"].length > 0) {
+              filter_object["primary_release_year"] = releaseDate["on"];
+            }
+          }
+        }
+        if (releaseDate.hasOwnProperty("from")) {
+          if (typeof releaseDate["from"] === "string") {
+            if (releaseDate["from"].length > 0) {
+              filter_object["primary_release_date.gte"] = releaseDate["from"];
+            }
+          }
+        }
+        if (releaseDate.hasOwnProperty("to")) {
+          if (typeof releaseDate["to"] === "string") {
+            if (releaseDate["to"].length > 0) {
+              filter_object["primary_release_date.lte"] = releaseDate["to"];
+            }
+          }
+        }
+      }
+
+      // Certification Choices
+      if (certChoices !== null) {
+        filter_object["certification_country"] = "GB";
+        filter_object["certification"] = `${certChoices.join("|")}`;
+      }
+
+      return {
+        ...new_obj,
+        ...filter_object,
+      };
+    });
   }
 
   function handleReleaseDate(
@@ -365,25 +386,27 @@ function App() {
           <Typography sx={{ letterSpacing: 1, textAlign: "center" }}>
             Age Certification
           </Typography>
-          {!certDataIsFetching && (
-            <Stack spacing={2} direction="row">
-              {certificationData?.map(
-                ({ certification, selected }: ICert, index: number) => (
-                  <ToggleButton
-                    key={index}
-                    value={certification}
-                    selected={selected}
-                    onChange={handleCertificationChoices}
-                    sx={{
-                      width: 50,
-                    }}
-                  >
-                    {certification}
-                  </ToggleButton>
-                )
-              )}
-            </Stack>
-          )}
+          {!certDataIsFetching &&
+            certificationData &&
+            Array.isArray(certificationData) && (
+              <Stack spacing={2} direction="row">
+                {certificationData.map(
+                  ({ certification, selected }: ICert, index: number) => (
+                    <ToggleButton
+                      key={index}
+                      value={certification}
+                      selected={selected}
+                      onChange={handleCertificationChoices}
+                      sx={{
+                        width: 50,
+                      }}
+                    >
+                      {certification}
+                    </ToggleButton>
+                  )
+                )}
+              </Stack>
+            )}
 
           <Divider sx={{ m: 2 }} />
 

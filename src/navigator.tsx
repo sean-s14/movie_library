@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useState, SyntheticEvent } from "react";
 import { AppBar, Toolbar, Typography, Tabs, Tab } from "@mui/material";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAxios } from "src/hooks/exports";
 
@@ -11,11 +11,10 @@ interface IGenres {
 }
 
 export default function Navigator() {
-  const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const api = useAxios();
   const [value, setValue] = useState(0);
-  // const [valueText, setValueText] = useState("");
 
   const { data: movieGenres }: any = useQuery({
     queryKey: ["movie", "genres"],
@@ -31,10 +30,26 @@ export default function Navigator() {
     }
   }
 
+  /**
+   * Retrieves array of genres from queryClient with hash ["movie", "genres"].
+   * Filter out the genre ID from the genres array using the 'genre' parameter.
+   */
+  function getGenreId(genre: string): string | undefined {
+    console.log("Genre:", genre);
+    // if (!searchParams.get("with_genres")) return undefined;
+    try {
+      const genreId = movieGenres?.genres.filter(
+        (movie: IGenres) => movie.name.toLowerCase() === genre
+      )[0].id;
+      return genreId.toString();
+    } catch (e: any) {
+      return undefined;
+    }
+  }
+
+  // TODO: What's going on here
   useEffect(() => {
     const path = location.pathname.replace("/", "");
-    // console.log("location :", location);
-    // console.log("path :", path);
     movieGenres?.genres.forEach((movie: IGenres, index: number) => {
       if (movie.name.toLowerCase() === path) {
         setValue(index + 1);
@@ -48,13 +63,19 @@ export default function Navigator() {
   ) => {
     setValue(newValue);
     // @ts-ignore
-    let target = event.target?.textContent.toLowerCase();
-    if (target) {
-      if (target === "discover") {
-        navigate("/");
-      } else {
-        navigate(`/${target}`);
-      }
+    const target = getGenreId(event.target?.textContent.toLowerCase());
+    console.log("Target:", target);
+    if (target === undefined) {
+      setSearchParams((prev) => {
+        let new_obj = Object.fromEntries(prev.entries());
+        delete new_obj["with_genres"];
+        return new_obj;
+      });
+    } else {
+      setSearchParams((prev) => ({
+        ...Object.fromEntries(prev.entries()),
+        with_genres: target,
+      }));
     }
   };
 
