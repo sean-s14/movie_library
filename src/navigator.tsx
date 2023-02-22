@@ -1,9 +1,21 @@
 import { useEffect } from "react";
 import { useState, SyntheticEvent } from "react";
-import { AppBar, Toolbar, Typography, Tabs, Tab } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Tabs,
+  Tab,
+  TextField,
+  InputAdornment,
+  Box,
+} from "@mui/material";
+import { Search } from "@mui/icons-material";
+import { grey } from "@mui/material/colors";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAxios } from "src/hooks/exports";
+import TMDB_LOGO from "src/assets/tmdb_logo_2.svg";
 
 interface IGenres {
   id: number;
@@ -92,10 +104,32 @@ export default function Navigator() {
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: { sm: "center" },
+          justifyContent: "space-between",
+          // justifyContent: { sm: "center" },
         }}
       >
-        <Typography>Welcome to Sean's Movie Library</Typography>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <img
+            src={TMDB_LOGO}
+            alt="TMDB Logo"
+            height="30"
+            style={{ marginLeft: 20, marginRight: 30 }}
+          />
+          <Typography variant="h5">Sean's Movie Library</Typography>
+        </Box>
+        <TextField
+          id="search-bar"
+          variant="outlined"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search />
+              </InputAdornment>
+            ),
+          }}
+          size="small"
+          sx={{ background: grey[900] }}
+        />
       </Toolbar>
 
       <Tabs
