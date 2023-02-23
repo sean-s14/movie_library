@@ -26,6 +26,7 @@ import {
   CircularProgress,
   TextField,
   Divider,
+  Tooltip,
 } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import { green, amber, red, grey } from "@mui/material/colors";
@@ -117,10 +118,9 @@ function App() {
   const [certChoices, setCertChoices] = useState<string[] | null>(null);
   const [releaseDate, setReleaseDate] = useState<IReleaseDate | null>(null);
   const [rating, setRating] = useState<IRating | null>(null);
-  const [allFilters, setAllFilters] = useState<any[] | null>(null);
 
   useEffect(() => {
-    // window.scrollTo(0, 0);
+    // window.scrollTo(0, 0); // This works on all browsers (I think) but it isn't smooth
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" }); // Doesn't work on safari as of July 2021
   }, [pageNum]);
 
@@ -128,21 +128,13 @@ function App() {
     setPageNum(1);
   }, [sort]);
 
-  useEffect(() => {
-    console.log("Release Date:", releaseDate);
-  }, [releaseDate]);
-
-  useEffect(() => {
-    console.log("With Genres:", searchParams.get("with_genres"));
-  }, [searchParams.get("with_genres")]);
-
   const {
     data: movieData,
     refetch: refetchMovieData,
     isFetching: movieDataIsFetching,
   }: any = useQuery({
-    enabled: !!queryClient.getQueryData(["movie", "genres"]), // TODO: Explain Why
-    // queryKey: ["movie", genre || "discover", pageNum, sort, allFilters],
+    // "enabled" prevents api query from begin made before a list of genres has been retrieved
+    enabled: !!queryClient.getQueryData(["movie", "genres"]),
     queryKey: ["movie", ...searchParams.entries()],
     queryFn: getMovieList,
   });
@@ -180,18 +172,25 @@ function App() {
   }
 
   async function getMovieList() {
+    console.log("Search Params:", searchParams.get("query"));
     try {
-      let query = `discover/movie`;
+      let full_query = "discover/movie";
       let first = true;
       for (const [key, val] of searchParams.entries()) {
-        query += `${first ? "?" : "&"}${key}=${val}`;
+        // If it is using the "query" parameter then there is no need to add any
+        // other parameters since they will not work with tmdb
+        if (key === "query") {
+          full_query = `search/movie?${key}=${val}`;
+          break;
+        }
+        full_query += `${first ? "?" : "&"}${key}=${val}`;
         if (first) {
           first = false;
         }
       }
 
-      console.log("Query :", query);
-      const result = await api.get(query);
+      console.log("Full Query :", full_query);
+      const result = await api.get(full_query);
       return result?.data;
     } catch (e: any) {
       throw e.response.data.error;
@@ -283,7 +282,6 @@ function App() {
     }
     const filter_object: IFilterObject = {};
 
-    setAllFilters([certChoices, releaseDate, rating]);
     setSearchParams((prev) => {
       let new_obj = Object.fromEntries(prev.entries());
 
@@ -370,12 +368,16 @@ function App() {
     setRating((prev) => ({ ...prev, [prop]: val }));
   }
 
+  function handleIsQuery() {
+    return searchParams.get("query") !== null;
+  }
+
   return (
     <RouteContainer
       sx={{ flexDirection: "column", alignItems: "center", px: 5 }}
     >
       {/* Filter Options */}
-      <Collapse in={filterOpen} sx={{ zIndex: 1 }}>
+      <Collapse in={!handleIsQuery() && filterOpen} sx={{ zIndex: 1 }}>
         <Stack
           spacing={2}
           sx={{
@@ -550,24 +552,44 @@ function App() {
             }}
             size="small"
           >
-            <Select
-              variant="outlined"
-              value={sort}
-              displayEmpty
-              onChange={handleSort}
+            <Tooltip
+              title={
+                handleIsQuery()
+                  ? "Movies cannot be sorted when using the search bar"
+                  : ""
+              }
             >
-              {sortOptions?.map(({ title, query }, index) => (
-                <MenuItem key={index} value={query}>
-                  {title}
-                </MenuItem>
-              ))}
-            </Select>
+              <span>
+                <Select
+                  variant="outlined"
+                  value={sort}
+                  displayEmpty
+                  onChange={handleSort}
+                  disabled={handleIsQuery()}
+                  sx={handleIsQuery() ? { pointerEvents: "none" } : {}}
+                >
+                  {sortOptions?.map(({ title, query }, index) => (
+                    <MenuItem key={index} value={query}>
+                      {title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </span>
+            </Tooltip>
           </FormControl>
 
           {/* Filter */}
-          <Button variant="outlined" onClick={handleFilterOpen}>
-            Filter
-          </Button>
+          <Tooltip title="Movies cannot be filtered when using the search bar">
+            <span>
+              <Button
+                variant="outlined"
+                onClick={handleFilterOpen}
+                disabled={handleIsQuery()}
+              >
+                Filter
+              </Button>
+            </span>
+          </Tooltip>
         </Stack>
       </Stack>
 
@@ -661,7 +683,7 @@ function App() {
                           fontWeight: 700,
                         }}
                       >
-                        {movie.vote_average}
+                        {movie.vote_average?.toFixed(1)}
                       </Avatar>
                       <CircularProgress
                         variant="determinate"

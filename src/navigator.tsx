@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { useState, SyntheticEvent } from "react";
+import { useEffect, useState, SyntheticEvent, KeyboardEvent } from "react";
 import {
   AppBar,
   Toolbar,
@@ -9,10 +8,11 @@ import {
   TextField,
   InputAdornment,
   Box,
+  Tooltip,
 } from "@mui/material";
 import { Search } from "@mui/icons-material";
 import { grey } from "@mui/material/colors";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAxios } from "src/hooks/exports";
 import TMDB_LOGO from "src/assets/tmdb_logo_2.svg";
@@ -69,10 +69,10 @@ export default function Navigator() {
     });
   }, [location, movieGenres]);
 
-  const handleTabChange = (
+  function handleTabChange(
     event: SyntheticEvent<Element, Event>,
     newValue: number
-  ) => {
+  ) {
     setValue(newValue);
     // @ts-ignore
     const target = getGenreId(event.target?.textContent.toLowerCase());
@@ -89,7 +89,36 @@ export default function Navigator() {
         with_genres: target,
       }));
     }
-  };
+  }
+
+  // function handleSearch(e: ChangeEvent<HTMLInputElement>) {
+  function handleSearch(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key !== "Enter") return;
+    // @ts-ignore
+    const value = e.target.value;
+    if (typeof value === "string") {
+      setSearchParams((prev) => ({
+        ...Object.fromEntries(prev.entries()),
+        query: value.toString(),
+      }));
+    }
+  }
+
+  function handleIsDiscover() {
+    let params = 0;
+    let isQuery = false;
+    if (searchParams.get("query") !== null) {
+      isQuery = true;
+      params++;
+    }
+    for (const [key, val] of searchParams.entries()) {
+      if (key === "query") continue;
+      params++;
+    }
+    if ((!isQuery && params > 0) || (isQuery && params > 1)) {
+      return true;
+    }
+  }
 
   return (
     <AppBar
@@ -117,19 +146,31 @@ export default function Navigator() {
           />
           <Typography variant="h5">Sean's Movie Library</Typography>
         </Box>
-        <TextField
-          id="search-bar"
-          variant="outlined"
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search />
-              </InputAdornment>
-            ),
-          }}
-          size="small"
-          sx={{ background: grey[900] }}
-        />
+        <Tooltip
+          title={
+            handleIsDiscover()
+              ? "Movies cannot be searched by name when using sort or filter"
+              : ""
+          }
+        >
+          <span>
+            <TextField
+              onKeyDown={handleSearch}
+              id="search-bar"
+              variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search />
+                  </InputAdornment>
+                ),
+              }}
+              size="small"
+              sx={{ background: grey[900] }}
+              disabled={handleIsDiscover()}
+            />
+          </span>
+        </Tooltip>
       </Toolbar>
 
       <Tabs
