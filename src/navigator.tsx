@@ -12,7 +12,14 @@ import {
 } from "@mui/material";
 import { Search } from "@mui/icons-material";
 import { grey } from "@mui/material/colors";
-import { useLocation, useSearchParams } from "react-router-dom";
+import {
+  useNavigate,
+  useLocation,
+  useSearchParams,
+  createSearchParams,
+  Link,
+  Outlet,
+} from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAxios } from "src/hooks/exports";
 import TMDB_LOGO from "src/assets/tmdb_logo_2.svg";
@@ -25,8 +32,9 @@ interface IGenres {
 export default function Navigator() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const api = useAxios();
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState<number | boolean>(0);
 
   const { data: movieGenres }: any = useQuery({
     queryKey: ["movie", "genres"],
@@ -67,6 +75,10 @@ export default function Navigator() {
         setValue(index + 1);
       }
     });
+    console.log("Location:", location);
+    if (location.pathname === "/") {
+      setValue(false);
+    }
   }, [location, movieGenres]);
 
   function handleTabChange(
@@ -77,18 +89,13 @@ export default function Navigator() {
     // @ts-ignore
     const target = getGenreId(event.target?.textContent.toLowerCase());
     console.log("Target:", target);
-    if (target === undefined) {
-      setSearchParams((prev) => {
-        let new_obj = Object.fromEntries(prev.entries());
-        delete new_obj["with_genres"];
-        return new_obj;
+    if (target !== undefined) {
+      return navigate({
+        pathname: "movies",
+        search: createSearchParams({ with_genres: target }).toString(),
       });
-    } else {
-      setSearchParams((prev) => ({
-        ...Object.fromEntries(prev.entries()),
-        with_genres: target,
-      }));
     }
+    return navigate("movies");
   }
 
   // function handleSearch(e: ChangeEvent<HTMLInputElement>) {
@@ -121,74 +128,84 @@ export default function Navigator() {
   }
 
   return (
-    <AppBar
-      component="nav"
-      sx={{
-        height: 130,
-        display: "flex",
-        justifyContent: "center",
-      }}
-    >
-      <Toolbar
+    <>
+      <AppBar
+        component="nav"
         sx={{
+          height: 130,
           display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          // justifyContent: { sm: "center" },
+          justifyContent: "center",
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <img
-            src={TMDB_LOGO}
-            alt="TMDB Logo"
-            height="30"
-            style={{ marginLeft: 20, marginRight: 30 }}
-          />
-          <Typography variant="h5">Sean's Movie Library</Typography>
-        </Box>
-        <Tooltip
-          title={
-            handleIsDiscover()
-              ? "Movies cannot be searched by name when using sort or filter"
-              : ""
-          }
+        <Toolbar
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            // justifyContent: { sm: "center" },
+          }}
         >
-          <span>
-            <TextField
-              onKeyDown={handleSearch}
-              id="search-bar"
-              variant="outlined"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search />
-                  </InputAdornment>
-                ),
-              }}
-              size="small"
-              sx={{ background: grey[900] }}
-              disabled={handleIsDiscover()}
+          {/* Title & Logo */}
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <img
+              src={TMDB_LOGO}
+              alt="TMDB Logo"
+              height="30"
+              style={{ marginLeft: 20, marginRight: 30, cursor: "pointer" }}
+              onClick={() => navigate("/")}
             />
-          </span>
-        </Tooltip>
-      </Toolbar>
+            <Typography variant="h5">Sean's Movie Library</Typography>
+          </Box>
 
-      <Tabs
-        value={value}
-        onChange={handleTabChange}
-        variant="scrollable"
-        scrollButtons="auto"
-        aria-label="scrollable tabs for genres"
-        sx={{ height: 60 }}
-        TabIndicatorProps={{
-          style: { transition: "none" },
-        }}
-      >
-        <Tab label={"Discover"} value={0} />
-        {movieGenres?.genres?.map(({ id, name }: IGenres, index: number) => (
-          <Tab key={index} label={name} value={index + 1} />
-        ))}
-      </Tabs>
-    </AppBar>
+          {/* <Link to="/movies">Movies</Link> */}
+
+          {/* Search Box */}
+          <Tooltip
+            title={
+              handleIsDiscover()
+                ? "Movies cannot be searched by name when using sort or filter"
+                : ""
+            }
+          >
+            <span>
+              <TextField
+                onKeyDown={handleSearch}
+                id="search-bar"
+                variant="outlined"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search />
+                    </InputAdornment>
+                  ),
+                }}
+                size="small"
+                sx={{ background: grey[900] }}
+                disabled={handleIsDiscover()}
+              />
+            </span>
+          </Tooltip>
+        </Toolbar>
+
+        <Tabs
+          value={value}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+          aria-label="scrollable tabs for genres"
+          sx={{ height: 60 }}
+          TabIndicatorProps={{
+            style: { transition: "none" },
+          }}
+        >
+          <Tab label={"Discover"} value={0} />
+          {movieGenres?.genres?.map(({ id, name }: IGenres, index: number) => (
+            <Tab key={index} label={name} value={index + 1} />
+          ))}
+        </Tabs>
+      </AppBar>
+
+      <Outlet />
+    </>
   );
 }

@@ -6,7 +6,6 @@ import { useSearchParams } from "react-router-dom";
 import {
   Paper,
   Stack,
-  Box,
   Collapse,
   FormControl,
   FormControlLabel,
@@ -18,7 +17,6 @@ import {
   Card,
   CardMedia,
   CardContent,
-  CardHeader,
   Typography,
   Skeleton,
   Pagination,
@@ -32,11 +30,6 @@ import Grid from "@mui/material/Unstable_Grid2";
 import { green, amber, red, grey } from "@mui/material/colors";
 import RouteContainer from "src/routeContainer";
 import { dateConverter } from "src/utils/exports";
-
-interface IGenres {
-  id: number;
-  name: string;
-}
 
 interface IMovie {
   poster_path?: string | null;
@@ -377,11 +370,25 @@ function App() {
       sx={{ flexDirection: "column", alignItems: "center", px: 5 }}
     >
       {/* Filter Options */}
-      <Collapse in={!handleIsQuery() && filterOpen} sx={{ zIndex: 1 }}>
+      <Collapse
+        in={!handleIsQuery() && filterOpen}
+        sx={{
+          zIndex: 1,
+          // backgroundColor: grey[900],
+          backgroundColor: "rgba(33, 33, 33, 0.8)",
+          px: 4,
+          py: 2,
+          mb: 2,
+          borderRadius: 2,
+          width: "90%",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
         <Stack
           spacing={2}
           sx={{
-            height: 460,
+            height: 430,
           }}
         >
           {/* Age Certification */}
@@ -391,7 +398,7 @@ function App() {
           {!certDataIsFetching &&
             certificationData &&
             Array.isArray(certificationData) && (
-              <Stack spacing={2} direction="row">
+              <Stack spacing={2} direction="row" justifyContent="center">
                 {certificationData.map(
                   ({ certification, selected }: ICert, index: number) => (
                     <ToggleButton
@@ -416,7 +423,7 @@ function App() {
           <Typography sx={{ letterSpacing: 1, textAlign: "center" }}>
             Release Date
           </Typography>
-          <Stack spacing={2} direction="row">
+          <Stack spacing={2} direction="row" justifyContent="center">
             <FormControlLabel
               // value="start"
               label="on"
@@ -477,7 +484,7 @@ function App() {
           <Typography sx={{ letterSpacing: 1, textAlign: "center" }}>
             Rating
           </Typography>
-          <Stack spacing={2} direction="row" justifyContent="space-evenly">
+          <Stack spacing={5} direction="row" justifyContent="center">
             <FormControlLabel
               // value="start"
               label="min"
@@ -517,7 +524,12 @@ function App() {
             fullWidth
             variant="outlined"
             onClick={searchWithFilters}
-            sx={{ mt: "40px !important" }}
+            sx={{
+              mt: "30px !important",
+              width: "90%",
+              maxWidth: 500,
+              alignSelf: "center",
+            }}
           >
             Search
           </Button>

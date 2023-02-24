@@ -1,15 +1,29 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { MovieList } from "src/routes/exports";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { Home, MovieList } from "src/routes/exports";
 import Navigator from "./navigator";
+
+const router = createBrowserRouter([
+  {
+    element: <Navigator />,
+    children: [
+      {
+        path: "/movies",
+        element: <MovieList />,
+      },
+      {
+        path: "*",
+        element: <Home />,
+      },
+    ],
+  },
+]);
 
 function App() {
   return (
-    <BrowserRouter>
-      <Navigator />
-      <Routes>
-        <Route path="/" element={<MovieList />} />
-      </Routes>
-    </BrowserRouter>
+    <RouterProvider
+      router={router}
+      // fallbackElement={<BigSpinner />} TODO: Add Later
+    />
   );
 }
 
