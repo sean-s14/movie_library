@@ -101,6 +101,16 @@ interface IRating {
   max?: string;
 }
 
+interface IFilterObject {
+  "vote_average.gte"?: string;
+  "vote_average.lte"?: string;
+  primary_release_year?: string;
+  "primary_release_date.gte"?: string;
+  "primary_release_date.lte"?: string;
+  certification_country?: string;
+  certification?: string;
+}
+
 function App() {
   const queryClient = useQueryClient();
   const api = useAxios();
@@ -264,15 +274,6 @@ function App() {
 
   /** Executed when clicking the search button for filters */
   function searchWithFilters() {
-    interface IFilterObject {
-      "vote_average.gte"?: string;
-      "vote_average.lte"?: string;
-      primary_release_year?: string;
-      "primary_release_date.gte"?: string;
-      "primary_release_date.lte"?: string;
-      certification_country?: string;
-      certification?: string;
-    }
     const filter_object: IFilterObject = {};
 
     setSearchParams((prev) => {
@@ -372,23 +373,21 @@ function App() {
       {/* Filter Options */}
       <Collapse
         in={!handleIsQuery() && filterOpen}
+        timeout={1000}
         sx={{
           zIndex: 1,
-          // backgroundColor: grey[900],
           backgroundColor: "rgba(33, 33, 33, 0.8)",
-          px: 4,
-          py: 2,
           mb: 2,
           borderRadius: 2,
           width: "90%",
-          display: "flex",
-          justifyContent: "center",
         }}
       >
         <Stack
           spacing={2}
           sx={{
-            height: 430,
+            height: 460,
+            px: 4,
+            py: 2,
           }}
         >
           {/* Age Certification */}

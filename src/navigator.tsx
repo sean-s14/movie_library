@@ -1,4 +1,10 @@
-import { useEffect, useState, SyntheticEvent, KeyboardEvent } from "react";
+import {
+  useEffect,
+  useState,
+  SyntheticEvent,
+  KeyboardEvent,
+  ChangeEvent,
+} from "react";
 import {
   AppBar,
   Toolbar,
@@ -35,12 +41,14 @@ export default function Navigator() {
   const navigate = useNavigate();
   const api = useAxios();
   const [value, setValue] = useState<number | boolean>(0);
+  const [searchText, setSearchText] = useState("");
 
   const { data: movieGenres }: any = useQuery({
     queryKey: ["movie", "genres"],
     queryFn: getMovieGenres,
   });
 
+  /** Retrieves all movie genres from API */
   async function getMovieGenres() {
     try {
       const result = await api.get("/genre/movie/list");
@@ -75,12 +83,12 @@ export default function Navigator() {
         setValue(index + 1);
       }
     });
-    console.log("Location:", location);
     if (location.pathname === "/") {
       setValue(false);
     }
   }, [location, movieGenres]);
 
+  /** Navigates to /movies with the ?with_genres={genreId} as its parameter */
   function handleTabChange(
     event: SyntheticEvent<Element, Event>,
     newValue: number
@@ -98,19 +106,32 @@ export default function Navigator() {
     return navigate("movies");
   }
 
-  // function handleSearch(e: ChangeEvent<HTMLInputElement>) {
-  function handleSearch(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key !== "Enter") return;
-    // @ts-ignore
-    const value = e.target.value;
-    if (typeof value === "string") {
-      setSearchParams((prev) => ({
-        ...Object.fromEntries(prev.entries()),
-        query: value.toString(),
-      }));
+  /** Navigates to /movies with ?query={searchText} as its parameters */
+  function handleSearch() {
+    return navigate({
+      pathname: "movies",
+      search: createSearchParams({ query: searchText }).toString(),
+    });
+  }
+
+  /** Executes handleSearch (above) if the 'enter' key is pressed */
+  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      handleSearch();
     }
   }
 
+  /** Set's the searchText state variable whenever the text in TextField changes */
+  function handleSearchOnChange(e: ChangeEvent<HTMLInputElement>) {
+    // @ts-ignore
+    const value = e.target.value;
+    console.log(typeof value, value);
+    if (typeof value === "string") {
+      setSearchText(value);
+    }
+  }
+
+  /** Determines wether user is on the "discover" page */
   function handleIsDiscover() {
     let params = 0;
     let isQuery = false;
@@ -169,12 +190,18 @@ export default function Navigator() {
           >
             <span>
               <TextField
-                onKeyDown={handleSearch}
+                value={searchText}
+                onChange={handleSearchOnChange}
+                onKeyDown={handleKeyDown}
                 id="search-bar"
                 variant="outlined"
                 InputProps={{
                   startAdornment: (
-                    <InputAdornment position="start">
+                    <InputAdornment
+                      position="start"
+                      sx={{ cursor: "pointer" }}
+                      onClick={handleSearch}
+                    >
                       <Search />
                     </InputAdornment>
                   ),
