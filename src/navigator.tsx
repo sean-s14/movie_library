@@ -23,7 +23,6 @@ import {
   useLocation,
   useSearchParams,
   createSearchParams,
-  Link,
   Outlet,
 } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -83,7 +82,8 @@ export default function Navigator() {
         setValue(index + 1);
       }
     });
-    if (location.pathname === "/") {
+    const regex = new RegExp(/\/movies\/[0-9]+/);
+    if (location.pathname === "/" || regex.test(location.pathname)) {
       setValue(false);
     }
   }, [location, movieGenres]);

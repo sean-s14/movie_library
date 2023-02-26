@@ -1,5 +1,5 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { Home, MovieList } from "src/routes/exports";
+import { Home, MovieList, MovieDetail } from "src/routes/exports";
 import Navigator from "./navigator";
 
 const router = createBrowserRouter([
@@ -9,6 +9,10 @@ const router = createBrowserRouter([
       {
         path: "/movies",
         element: <MovieList />,
+      },
+      {
+        path: "/movies/:id",
+        element: <MovieDetail />,
       },
       {
         path: "*",

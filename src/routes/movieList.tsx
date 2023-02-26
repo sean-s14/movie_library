@@ -2,7 +2,7 @@ import "./movieList.css";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAxios } from "src/hooks/exports";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import {
   Paper,
   Stack,
@@ -535,6 +535,7 @@ function App() {
         </Stack>
       </Collapse>
 
+      {/* Pagination, Sort & Filter */}
       <Stack
         direction="row"
         spacing={8}
@@ -657,75 +658,81 @@ function App() {
                 justifyContent="center"
                 alignItems="center"
               >
-                <Paper
-                  elevation={12}
-                  sx={{
-                    borderRadius: 3,
-                    backgroundColor: "rgba(0, 0, 0, 0.4)",
-                    zIndex: 1,
-                  }}
+                <Link
+                  to={`/movies/${movie.id}`}
+                  style={{ textDecoration: "none" }}
                 >
-                  <Card
+                  <Paper
+                    elevation={12}
                     sx={{
-                      width: 185,
-                      borderRadius: "inherit",
-                      backgroundColor: "rgba(0, 0, 0, 0)",
+                      borderRadius: 3,
+                      backgroundColor: "rgba(0, 0, 0, 0.4)",
+                      zIndex: 1,
                     }}
                   >
-                    <CardMedia
-                      component="img"
-                      src={`https://image.tmdb.org/t/p/w185/${movie.poster_path}`}
-                      alt={movie.title}
-                      height={277}
-                    />
-                    <CardContent
+                    <Card
                       sx={{
-                        height: 130,
-                        color: grey[100],
+                        width: 185,
+                        borderRadius: "inherit",
+                        backgroundColor: "rgba(0, 0, 0, 0)",
                       }}
-                      className="glassmorphism"
                     >
-                      <Avatar
-                        sx={{
-                          bgcolor: "black",
-                          mt: -5,
-                          color: "white",
-                          fontSize: 16,
-                          fontWeight: 700,
-                        }}
-                      >
-                        {movie.vote_average?.toFixed(1)}
-                      </Avatar>
-                      <CircularProgress
-                        variant="determinate"
-                        size={38}
-                        sx={{
-                          ml: "1px",
-                          mt: "-39px",
-                          position: "absolute",
-                          color: () => calculateColor(movie),
-                        }}
-                        value={
-                          (movie?.vote_average && movie.vote_average * 10) || 0
-                        }
+                      <CardMedia
+                        component="img"
+                        src={`https://image.tmdb.org/t/p/w185/${movie.poster_path}`}
+                        alt={movie.title}
+                        height={277}
                       />
-                      <Typography
-                        variant={"body1"}
-                        sx={{ mt: 1, color: "inherit", fontWeight: 700 }}
-                        gutterBottom
+                      <CardContent
+                        sx={{
+                          height: 130,
+                          color: grey[100],
+                        }}
+                        className="glassmorphism"
                       >
-                        {movie.title}
-                      </Typography>
-                      <Typography
-                        variant={"subtitle2"}
-                        sx={{ color: grey[300] }}
-                      >
-                        {movie.release_date &&
-                          dateConverter(movie.release_date, true)}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Paper>
+                        <Avatar
+                          sx={{
+                            bgcolor: "black",
+                            mt: -5,
+                            color: "white",
+                            fontSize: 16,
+                            fontWeight: 700,
+                          }}
+                        >
+                          {movie.vote_average?.toFixed(1)}
+                        </Avatar>
+                        <CircularProgress
+                          variant="determinate"
+                          size={38}
+                          sx={{
+                            ml: "1px",
+                            mt: "-39px",
+                            position: "absolute",
+                            color: () => calculateColor(movie),
+                          }}
+                          value={
+                            (movie?.vote_average && movie.vote_average * 10) ||
+                            0
+                          }
+                        />
+                        <Typography
+                          variant={"body1"}
+                          sx={{ mt: 1, color: "inherit", fontWeight: 700 }}
+                          gutterBottom
+                        >
+                          {movie.title}
+                        </Typography>
+                        <Typography
+                          variant={"subtitle2"}
+                          sx={{ color: grey[300] }}
+                        >
+                          {movie.release_date &&
+                            dateConverter(movie.release_date, true)}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Paper>
+                </Link>
               </Grid>
             ))}
       </Grid>
