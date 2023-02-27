@@ -27,9 +27,9 @@ import {
   Tooltip,
 } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
-import { green, amber, red, grey } from "@mui/material/colors";
+import { grey } from "@mui/material/colors";
 import RouteContainer from "src/routeContainer";
-import { dateConverter } from "src/utils/exports";
+import { dateConverter, calculateColor } from "src/utils/exports";
 
 interface IMovie {
   poster_path?: string | null;
@@ -131,11 +131,7 @@ function App() {
     setPageNum(1);
   }, [sort]);
 
-  const {
-    data: movieData,
-    refetch: refetchMovieData,
-    isFetching: movieDataIsFetching,
-  }: any = useQuery({
+  const { data: movieData, isFetching: movieDataIsFetching }: any = useQuery({
     // "enabled" prevents api query from begin made before a list of genres has been retrieved
     enabled: !!queryClient.getQueryData(["movie", "genres"]),
     queryKey: ["movie", ...searchParams.entries()],
@@ -221,23 +217,6 @@ function App() {
 
   function handleFilterOpen() {
     setFilterOpen((prev) => !prev);
-  }
-
-  /**
-   * Used to calculate the color to use for the circular progress bar surrounding the movie rating
-   */
-  function calculateColor(movie: IMovie) {
-    if (movie?.vote_average) {
-      if (movie.vote_average > 8) {
-        return green[400];
-      } else if (movie.vote_average > 4) {
-        return amber[400];
-      } else {
-        return red[400];
-      }
-    } else {
-      return "grey";
-    }
   }
 
   function handleCertificationChoices(e: any, newAlignment: string | null) {
@@ -660,7 +639,7 @@ function App() {
               >
                 <Link
                   to={`/movies/${movie.id}`}
-                  style={{ textDecoration: "none" }}
+                  style={{ textDecoration: "none", zIndex: 1 }}
                 >
                   <Paper
                     elevation={12}

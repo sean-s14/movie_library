@@ -5,11 +5,11 @@ export default function RouteContainer(props: any) {
   return (
     <Box
       sx={{
-        mt: "70px",
+        mt: "130px",
         display: "flex",
         justifyContent: "center",
-        py: 10,
-        minHeight: "calc(100vh - 70px)",
+        py: 2,
+        minHeight: "calc(100vh - 130px)",
         /* fallback for old browsers */
         // background: "#0f2027",
         /* Chrome 10-25, Safari 5.1-6 */
@@ -20,17 +20,19 @@ export default function RouteContainer(props: any) {
         ...props.sx,
       }}
     >
-      <img
-        src={tmdbLogo}
-        alt="TMDB Logo"
-        style={{
-          position: "fixed",
-          top: 450,
-          margin: 30,
-          zIndex: 0,
-          opacity: 0.6,
-        }}
-      />
+      {!props?.noLogo && (
+        <img
+          src={tmdbLogo}
+          alt="TMDB Logo"
+          style={{
+            position: "fixed",
+            top: 450,
+            margin: 30,
+            zIndex: 0,
+            opacity: 0.6,
+          }}
+        />
+      )}
       {props.children}
     </Box>
   );
