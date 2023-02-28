@@ -6,6 +6,7 @@ import {
   Typography,
   Avatar,
   CircularProgress,
+  Divider,
 } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { useQuery } from "@tanstack/react-query";
@@ -17,6 +18,41 @@ import {
   timeConverter,
 } from "src/utils/exports";
 import RouteContainer from "src/routeContainer";
+
+interface ICrew {
+  adult?: boolean;
+  gender?: number | null;
+  id?: number;
+  known_for_department?: string;
+  name?: string;
+  original_name?: string;
+  popularity?: number;
+  profile_path?: string | null;
+  credit_id?: string;
+  department?: string;
+  job: string;
+}
+
+interface ICast {
+  adult?: boolean;
+  gender?: number | null;
+  id?: number;
+  known_for_department?: string;
+  name?: string;
+  original_name?: string;
+  popularity?: number;
+  profile_path?: string | null;
+  cast_id?: number;
+  character?: string;
+  credit_id?: string;
+  order: number;
+}
+
+interface ICredits {
+  cast: ICast[];
+  crew: ICrew[];
+  id: number;
+}
 
 export default function MovieDetail() {
   const api = useAxios();
@@ -35,6 +71,32 @@ export default function MovieDetail() {
     } catch (e: any) {
       throw e.response.data.error;
     }
+  }
+
+  const {
+    data: movieDataCredits,
+    isFetching: movieDataCreditsIsFetching,
+  }: any = useQuery({
+    queryKey: ["movie", movieId, "credits"],
+    queryFn: getMovieDetailCredits,
+  });
+
+  async function getMovieDetailCredits(): Promise<ICredits | Error> {
+    try {
+      const query = `movie/${movieId}/credits`;
+      const result = await api.get(query);
+      return result?.data;
+    } catch (e: any) {
+      throw e.response.data.error;
+    }
+  }
+
+  function getMainCrew(crew: ICrew[]): ICrew[] {
+    const main_crew = ["director", "producer", "writer"];
+    const filtered = crew.filter((worker) =>
+      main_crew.includes(worker["job"].toLowerCase())
+    );
+    return filtered;
   }
 
   return (
@@ -150,6 +212,35 @@ export default function MovieDetail() {
             <Typography variant={"body1"}>
               {movieData?.overview && movieData.overview}
             </Typography>
+
+            {movieDataCreditsIsFetching ? (
+              <Typography>Fetching...</Typography>
+            ) : (
+              <Stack
+                direction="row"
+                sx={{ maxWidth: "100%", flexWrap: "wrap", gap: 4 }}
+                divider={<Divider orientation="vertical" flexItem />}
+              >
+                {getMainCrew(movieDataCredits.crew).map(
+                  (worker: ICrew, index: number) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        objectFit: "contain",
+                        mt: 2,
+                      }}
+                    >
+                      <Typography sx={{ fontWeight: 700 }}>
+                        {worker?.name}
+                      </Typography>
+                      <Typography variant={"subtitle2"}>
+                        {worker?.job}
+                      </Typography>
+                    </Box>
+                  )
+                )}
+              </Stack>
+            )}
           </Stack>
         </Box>
       )}
