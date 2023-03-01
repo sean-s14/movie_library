@@ -13,3 +13,10 @@
   border-radius: 10px;
   margin: auto 20px auto 20px;
 }
+
+.carouselContainer {
+  padding: 30px 20px;
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+}
