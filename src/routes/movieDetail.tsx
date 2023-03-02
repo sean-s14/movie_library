@@ -11,10 +11,13 @@ import {
   Card,
   CardMedia,
   CardContent,
+  Modal,
+  Button,
 } from "@mui/material";
 import { grey } from "@mui/material/colors";
+import { PlayCircleOutline } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Carousel from "react-multi-carousel";
 import "react-multi-carousel/lib/styles.css";
 import { useAxios } from "src/hooks/exports";
@@ -80,9 +83,32 @@ interface ICredits {
   id: number;
 }
 
+interface IVideo {
+  is_639_1?: string;
+  is_3166_1?: string;
+  name?: string;
+  key?: string;
+  site?: string;
+  size?: string;
+  type?: string;
+  official?: boolean;
+  published_at?: string;
+  id: string;
+}
+
+interface IVideos {
+  id: number;
+  results: IVideo[];
+}
+
 export default function MovieDetail() {
   const api = useAxios();
   const { id: movieId } = useParams();
+  const [trailerOpen, setTrailerOpen] = useState(false);
+
+  function handleTrailerOpen() {
+    setTrailerOpen((prev) => !prev);
+  }
 
   const { data: movieData, isFetching: movieDataIsFetching }: any = useQuery({
     queryKey: ["movie", movieId],
@@ -97,6 +123,32 @@ export default function MovieDetail() {
     } catch (e: any) {
       throw e.response.data.error;
     }
+  }
+
+  const { data: movieVideos, isFetching: movieVideosIsFetching }: any =
+    useQuery({
+      queryKey: ["movie", "videos", movieId],
+      queryFn: getMovieVideos,
+    });
+
+  async function getMovieVideos() {
+    try {
+      const query = `movie/${movieId}/videos`;
+      const result = await api.get(query);
+      return result?.data;
+    } catch (e: any) {
+      throw e.response.data.error;
+    }
+  }
+
+  function getMovieTrailer(videos: IVideos): IVideo | null {
+    let trailer = null;
+    for (const video of videos["results"]) {
+      if (video["name"] === "Official Trailer" && video["type"] === "Trailer") {
+        trailer = video;
+      }
+    }
+    return trailer;
   }
 
   const {
@@ -196,41 +248,97 @@ export default function MovieDetail() {
                 </Typography>
               </Typography>
 
-              {/* User Score */}
-              <Box
-                sx={{
-                  position: "relative",
-                  width: 80,
-                  height: 80,
-                }}
-              >
-                <Avatar
+              <Stack direction="row" spacing={3} alignItems="center">
+                {/* User Score */}
+                <Box
                   sx={{
-                    bgcolor: "black",
-                    color: "white",
-                    fontSize: 24,
-                    fontWeight: 700,
-                    width: "100%",
-                    height: "100%",
+                    position: "relative",
+                    minWidth: 80,
+                    minHeight: 80,
+                    width: 80,
+                    height: 80,
+                    maxWidth: 80,
+                    maxHeight: 80,
+                    display: "inline-flex",
                   }}
                 >
-                  {movieData.vote_average?.toFixed(1)}
-                </Avatar>
-                <CircularProgress
-                  variant="determinate"
-                  size={"100%"}
+                  <Avatar
+                    sx={{
+                      bgcolor: "black",
+                      color: "white",
+                      fontSize: 24,
+                      fontWeight: 700,
+                      width: "100%",
+                      height: "100%",
+                    }}
+                  >
+                    {movieData.vote_average?.toFixed(1)}
+                  </Avatar>
+                  <CircularProgress
+                    variant="determinate"
+                    size={"100%"}
+                    sx={{
+                      position: "absolute",
+                      color: () => calculateColor(movieData),
+                    }}
+                    value={
+                      (movieData?.vote_average &&
+                        movieData.vote_average * 10) ||
+                      0
+                    }
+                  />
+                </Box>
+
+                {/* Trailer Button */}
+                <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={handleTrailerOpen}
                   sx={{
-                    // ml: "2px",
-                    mt: "-80px",
-                    position: "absolute",
-                    color: () => calculateColor(movieData),
+                    width: 180,
+                    height: 62,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    borderRadius: 10,
+                    px: 0,
+                    py: 0,
+                    pr: 2,
                   }}
-                  value={
-                    (movieData?.vote_average && movieData.vote_average * 10) ||
-                    0
-                  }
-                />
-              </Box>
+                >
+                  <PlayCircleOutline sx={{ fontSize: 60 }} />
+                  <Typography variant="h6">Trailer</Typography>
+                </Button>
+              </Stack>
+
+              {/* Trailer */}
+              <Modal
+                open={trailerOpen}
+                onClose={handleTrailerOpen}
+                aria-labelledby="trailer-modal"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Box
+                  sx={{
+                    maxWidth: "80%",
+                    width: 800,
+                    height: "calc(800px / 16 * 9)",
+                    maxHeight: "calc(80% / 16 * 9)",
+                  }}
+                >
+                  {getMovieTrailer(movieVideos) !== null && (
+                    <iframe
+                      id="movie-trailer"
+                      src={`https://www.youtube.com/embed/${
+                        getMovieTrailer(movieVideos)?.key
+                      }`}
+                    ></iframe>
+                  )}
+                </Box>
+              </Modal>
 
               {/* Tagline */}
               <Typography
