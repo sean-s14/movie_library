@@ -1,5 +1,5 @@
 import "./movieDetail.css";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Stack,
@@ -13,6 +13,7 @@ import {
   CardContent,
   Modal,
   Button,
+  Skeleton,
 } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { PlayCircleOutline } from "@mui/icons-material";
@@ -119,6 +120,12 @@ export default function MovieDetail() {
     try {
       const query = `movie/${movieId}`;
       const result = await api.get(query);
+      // Timeout for testing purposes
+      // return new Promise((resolve, reject) => {
+      //   setTimeout(() => {
+      //     resolve(result?.data);
+      //   }, 1500);
+      // });
       return result?.data;
     } catch (e: any) {
       throw e.response.data.error;
@@ -127,7 +134,7 @@ export default function MovieDetail() {
 
   const { data: movieVideos, isFetching: movieVideosIsFetching }: any =
     useQuery({
-      queryKey: ["movie", "videos", movieId],
+      queryKey: ["movie", movieId, "videos"],
       queryFn: getMovieVideos,
     });
 
@@ -187,109 +194,139 @@ export default function MovieDetail() {
         justifyContent: "flex-start",
       }}
     >
-      {movieDataIsFetching ? (
-        <Typography>Fetching...</Typography>
-      ) : (
-        <>
-          <Box
-            sx={{
-              width: "100%",
-              height: 550,
-              display: "flex",
-              position: "relative",
-            }}
-          >
-            <img
-              id="backdrop-image"
-              src={`https://image.tmdb.org/t/p/w1280/${movieData.backdrop_path}`}
-              alt={`Backdrop image for ${movieData.title}`}
-            />
-            <img
-              id="poster-image"
-              src={`https://image.tmdb.org/t/p/w500/${movieData.poster_path}`}
-              alt={`Poster image for ${movieData.title}`}
-            />
-            <Stack
-              spacing={1}
-              sx={{
-                position: "inherit",
-                width: "100%",
-                height: "100%",
-                color: grey[100],
-                p: 3,
-                pr: 15,
-                // borderLeft: "2px solid white", // TODO: Remove when done
-              }}
-            >
-              {/* Title */}
-              <Typography variant={"h4"} sx={{ color: "inherit" }}>
-                {movieData.title}
-              </Typography>
+      <Box
+        sx={{
+          width: "100%",
+          height: 550,
+          display: "flex",
+          position: "relative",
+        }}
+      >
+        {/* Backdrop Image */}
+        {movieData ? (
+          <img
+            id="backdrop-image"
+            src={`https://image.tmdb.org/t/p/w1280/${movieData.backdrop_path}`}
+            alt={`Backdrop image for ${movieData.title}`}
+          />
+        ) : (
+          <Skeleton
+            variant="rectangular"
+            width={"100%"}
+            height={"100%"}
+            sx={{ position: "absolute" }}
+          ></Skeleton>
+        )}
 
-              {/* Release Date, Genres, Runtime */}
-              <Typography variant={"subtitle2"} sx={{ color: grey[300] }}>
-                {movieData.release_date &&
-                  dateConverter(movieData.release_date, true)}
-                {"  "}
-                &bull;
-                {movieData?.genres &&
-                  movieData.genres.map(
-                    ({ name }: { name: string }, index: number) => (
-                      <Typography key={index} component={"span"}>
-                        {" "}
-                        {name}
-                        {index < movieData.genres.length - 1 && ","}
-                      </Typography>
-                    )
-                  )}{" "}
-                &bull;{" "}
-                <Typography component={"span"}>
-                  {movieData?.runtime && timeConverter(movieData.runtime)}
-                </Typography>
-              </Typography>
+        {/* Poster Image */}
+        {movieData ? (
+          <img
+            id="poster-image"
+            src={`https://image.tmdb.org/t/p/w500/${movieData.poster_path}`}
+            alt={`Poster image for ${movieData.title}`}
+          />
+        ) : (
+          <Skeleton
+            id="poster-image"
+            variant="rectangular"
+            sx={{ minWidth: 300 }}
+          ></Skeleton>
+        )}
 
-              <Stack direction="row" spacing={3} alignItems="center">
-                {/* User Score */}
-                <Box
+        <Stack
+          spacing={movieData ? 1 : 0}
+          sx={{
+            position: "inherit",
+            width: "100%",
+            height: "100%",
+            color: grey[100],
+            p: 3,
+            pr: 15,
+          }}
+        >
+          {/* Title */}
+          {movieData ? (
+            <Typography variant={"h4"} sx={{ color: "inherit" }}>
+              {movieData.title}
+            </Typography>
+          ) : (
+            <Skeleton width={350} height={70}></Skeleton>
+          )}
+
+          {/* Release Date, Genres, Runtime */}
+          {movieData ? (
+            <Typography variant={"subtitle2"} sx={{ color: grey[300] }}>
+              {movieData.release_date &&
+                dateConverter(movieData.release_date, true)}
+              {"  "}
+              &bull;
+              {movieData?.genres &&
+                movieData.genres.map(
+                  ({ name }: { name: string }, index: number) => (
+                    <Typography key={index} component={"span"}>
+                      {" "}
+                      {name}
+                      {index < movieData.genres.length - 1 && ","}
+                    </Typography>
+                  )
+                )}{" "}
+              &bull;{" "}
+              <Typography component={"span"}>
+                {movieData?.runtime && timeConverter(movieData.runtime)}
+              </Typography>
+            </Typography>
+          ) : (
+            <Skeleton width={350} height={40}></Skeleton>
+          )}
+
+          {/* User Score & Trailer Button */}
+          <Stack direction="row" spacing={3} alignItems="center">
+            {/* User Score */}
+            {movieData ? (
+              <Box
+                sx={{
+                  position: "relative",
+                  minWidth: 80,
+                  minHeight: 80,
+                  width: 80,
+                  height: 80,
+                  maxWidth: 80,
+                  maxHeight: 80,
+                  display: "inline-flex",
+                }}
+              >
+                <Avatar
                   sx={{
-                    position: "relative",
-                    minWidth: 80,
-                    minHeight: 80,
-                    width: 80,
-                    height: 80,
-                    maxWidth: 80,
-                    maxHeight: 80,
-                    display: "inline-flex",
+                    bgcolor: "black",
+                    color: "white",
+                    fontSize: 24,
+                    fontWeight: 700,
+                    width: "100%",
+                    height: "100%",
                   }}
                 >
-                  <Avatar
-                    sx={{
-                      bgcolor: "black",
-                      color: "white",
-                      fontSize: 24,
-                      fontWeight: 700,
-                      width: "100%",
-                      height: "100%",
-                    }}
-                  >
-                    {movieData.vote_average?.toFixed(1)}
-                  </Avatar>
-                  <CircularProgress
-                    variant="determinate"
-                    size={"100%"}
-                    sx={{
-                      position: "absolute",
-                      color: () => calculateColor(movieData),
-                    }}
-                    value={
-                      (movieData?.vote_average &&
-                        movieData.vote_average * 10) ||
-                      0
-                    }
-                  />
-                </Box>
+                  {movieData.vote_average?.toFixed(1)}
+                </Avatar>
+                <CircularProgress
+                  variant="determinate"
+                  size={"100%"}
+                  sx={{
+                    position: "absolute",
+                    color: () => calculateColor(movieData),
+                  }}
+                  value={
+                    (movieData?.vote_average && movieData.vote_average * 10) ||
+                    0
+                  }
+                />
+              </Box>
+            ) : (
+              <Skeleton variant="circular" width={80} height={80}></Skeleton>
+            )}
 
-                {/* Trailer Button */}
+            {/* Trailer Button */}
+            {!movieVideosIsFetching && movieVideos ? (
+              getMovieTrailer(movieVideos) !== null && (
                 <Button
                   variant="outlined"
                   size="large"
@@ -308,128 +345,157 @@ export default function MovieDetail() {
                   <PlayCircleOutline sx={{ fontSize: 60 }} />
                   <Typography variant="h6">Trailer</Typography>
                 </Button>
-              </Stack>
-
-              {/* Trailer */}
-              <Modal
-                open={trailerOpen}
-                onClose={handleTrailerOpen}
-                aria-labelledby="trailer-modal"
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Box
-                  sx={{
-                    maxWidth: "80%",
-                    width: 800,
-                    height: "calc(800px / 16 * 9)",
-                    maxHeight: "calc(80% / 16 * 9)",
-                  }}
-                >
-                  {getMovieTrailer(movieVideos) !== null && (
-                    <iframe
-                      id="movie-trailer"
-                      src={`https://www.youtube.com/embed/${
-                        getMovieTrailer(movieVideos)?.key
-                      }`}
-                    ></iframe>
-                  )}
-                </Box>
-              </Modal>
-
-              {/* Tagline */}
-              <Typography
-                component={"em"}
-                variant={"subtitle1"}
-                sx={{ color: grey[400], fontSize: 18 }}
-              >
-                {movieData?.tagline && movieData.tagline}
-              </Typography>
-
-              {/* Overview Label */}
-              <Typography variant={"h5"}>Overview</Typography>
-
-              {/* Overview */}
-              <Typography variant={"body1"}>
-                {movieData?.overview && movieData.overview}
-              </Typography>
-
-              {movieDataCreditsIsFetching ? (
-                <Typography>Fetching...</Typography>
-              ) : (
-                <Stack
-                  direction="row"
-                  sx={{ maxWidth: "100%", flexWrap: "wrap", gap: 4 }}
-                  divider={<Divider orientation="vertical" flexItem />}
-                >
-                  {getMainCrew(movieDataCredits.crew).map(
-                    (worker: ICrew, index: number) => (
-                      <Box
-                        key={index}
-                        sx={{
-                          objectFit: "contain",
-                          mt: 2,
-                        }}
-                      >
-                        <Typography sx={{ fontWeight: 700 }}>
-                          {worker?.name}
-                        </Typography>
-                        <Typography variant={"subtitle2"}>
-                          {worker?.job}
-                        </Typography>
-                      </Box>
-                    )
-                  )}
-                </Stack>
-              )}
-            </Stack>
-          </Box>
-
-          {/* Cast Carousel */}
-          <Box sx={{ width: "100%", p: 4 }}>
-            {movieDataCreditsIsFetching ? (
-              <Typography>Fetching...</Typography>
+              )
             ) : (
-              <Carousel
-                responsive={responsiveCarousel}
-                containerClass="carouselContainer"
-                slidesToSlide={6} // TODO: Change this to be responsive
-                customTransition="transform 750ms ease-in-out"
-              >
-                {movieDataCredits.cast.map((actor: ICast, index: number) => (
-                  <Paper
-                    key={index}
-                    elevation={12}
-                    sx={{ width: 170, borderRadius: 3 }}
-                  >
-                    <Card sx={{ borderRadius: "inherit" }}>
-                      <CardMedia
-                        image={`https://image.tmdb.org/t/p/w185/${actor.profile_path}`}
-                        sx={{ width: 170, height: 255 }}
-                      />
-                      <CardContent sx={{ height: 80, px: 2 }}>
-                        <Typography
-                          variant="h1"
-                          component="div"
-                          sx={{ fontSize: 16 }}
-                        >
-                          {actor.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {actor.character}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Paper>
-                ))}
-              </Carousel>
+              <Skeleton
+                variant="rectangular"
+                width={180}
+                height={62}
+                sx={{ borderRadius: 10 }}
+              ></Skeleton>
             )}
-          </Box>
-        </>
-      )}
+          </Stack>
+
+          {/* Trailer */}
+          <Modal
+            open={trailerOpen}
+            onClose={handleTrailerOpen}
+            aria-labelledby="trailer-modal"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Box
+              sx={{
+                maxWidth: "80%",
+                width: 800,
+                height: "calc(800px / 16 * 9)",
+                maxHeight: "calc(80% / 16 * 9)",
+              }}
+            >
+              {!movieVideosIsFetching &&
+                movieVideos &&
+                getMovieTrailer(movieVideos) !== null && (
+                  <iframe
+                    loading="lazy"
+                    id="movie-trailer"
+                    src={`https://www.youtube.com/embed/${
+                      getMovieTrailer(movieVideos)?.key
+                    }`}
+                  ></iframe>
+                )}
+            </Box>
+          </Modal>
+
+          {/* Tagline */}
+          {movieData ? (
+            <Typography
+              component={"em"}
+              variant={"subtitle1"}
+              sx={{ color: grey[400], fontSize: 18 }}
+            >
+              {movieData?.tagline && movieData.tagline}
+            </Typography>
+          ) : (
+            <Skeleton width={300} height={40}></Skeleton>
+          )}
+
+          {/* Overview Label */}
+          {movieData ? (
+            <Typography variant={"h5"}>Overview</Typography>
+          ) : (
+            <Skeleton width={140} height={50}></Skeleton>
+          )}
+
+          {/* Overview */}
+          {movieData ? (
+            <Typography variant={"body1"}>
+              {movieData?.overview && movieData.overview}
+            </Typography>
+          ) : (
+            <Skeleton width={"95%"} height={150}></Skeleton>
+          )}
+
+          <Stack
+            direction="row"
+            sx={{
+              maxWidth: "100%",
+              flexWrap: "wrap",
+              gap: 4,
+            }}
+            divider={<Divider orientation="vertical" flexItem />}
+          >
+            {!movieDataCreditsIsFetching && movieDataCredits
+              ? getMainCrew(movieDataCredits.crew).map(
+                  (worker: ICrew, index: number) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        objectFit: "contain",
+                        mt: 2,
+                      }}
+                    >
+                      <Typography sx={{ fontWeight: 700 }}>
+                        {worker?.name}
+                      </Typography>
+                      <Typography variant={"subtitle2"}>
+                        {worker?.job}
+                      </Typography>
+                    </Box>
+                  )
+                )
+              : [1, 2, 3, 4].map((item) => (
+                  <Box key={item} sx={{}}>
+                    <Skeleton width={100} height={35}></Skeleton>
+                    <Skeleton width={80} height={25}></Skeleton>
+                  </Box>
+                ))}
+          </Stack>
+        </Stack>
+      </Box>
+
+      {/* Cast Carousel */}
+      <Box sx={{ width: "100%", p: 4 }}>
+        {movieDataCreditsIsFetching ? (
+          <Typography>Fetching...</Typography>
+        ) : (
+          <Carousel
+            responsive={responsiveCarousel}
+            containerClass="carouselContainer"
+            slidesToSlide={5} // TODO: Change this to be responsive
+            customTransition="transform 750ms ease-in-out"
+          >
+            {movieDataCredits.cast.map((actor: ICast, index: number) => (
+              <Paper
+                key={index}
+                elevation={12}
+                sx={{ width: 170, borderRadius: 3 }}
+              >
+                <Card sx={{ borderRadius: "inherit" }}>
+                  <CardMedia
+                    image={`https://image.tmdb.org/t/p/w185/${actor.profile_path}`}
+                    sx={{ width: 170, height: 255 }}
+                  />
+                  <CardContent sx={{ height: 80, px: 2 }}>
+                    <Typography
+                      variant="h1"
+                      component="div"
+                      sx={{ fontSize: 16 }}
+                    >
+                      {actor.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {actor.character}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Paper>
+            ))}
+          </Carousel>
+        )}
+      </Box>
     </RouteContainer>
   );
 }
