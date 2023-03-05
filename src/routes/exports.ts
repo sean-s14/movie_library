@@ -1,5 +1,6 @@
+import Error from "./error";
+import Home from "./home";
 import MovieList from "./movieList";
 import MovieDetail from "./movieDetail";
-import Home from "./home";
 
-export { Home, MovieList, MovieDetail };
+export { Error, Home, MovieList, MovieDetail };
