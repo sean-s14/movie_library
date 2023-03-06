@@ -14,6 +14,7 @@ import {
   Modal,
   Button,
   Skeleton,
+  useMediaQuery,
 } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { PlayCircleOutline } from "@mui/icons-material";
@@ -32,20 +33,29 @@ import RouteContainer from "src/routeContainer";
 const responsiveCarousel = {
   superLargeDesktop: {
     // the naming can be any, depends on you.
-    breakpoint: { max: 4000, min: 3000 },
-    items: 10,
+    breakpoint: { max: 4000, min: 1300 },
+    items: 6,
+    slidesToSlide: 6,
   },
   desktop: {
-    breakpoint: { max: 3000, min: 1024 },
+    breakpoint: { max: 1300, min: 1100 },
     items: 5,
+    slidesToSlide: 5,
   },
   tablet: {
-    breakpoint: { max: 1024, min: 464 },
+    breakpoint: { max: 1100, min: 900 },
     items: 4,
+    slidesToSlide: 4,
+  },
+  tablet2: {
+    breakpoint: { max: 900, min: 700 },
+    items: 3,
+    slidesToSlide: 3,
   },
   mobile: {
-    breakpoint: { max: 464, min: 0 },
+    breakpoint: { max: 700, min: 0 },
     items: 2,
+    slidesToSlide: 2,
   },
 };
 
@@ -101,6 +111,15 @@ interface IVideos {
   id: number;
   results: IVideo[];
 }
+
+const styles = {
+  basicInfo: {
+    fontSize: { xs: 13, md: 16 },
+  },
+  userScore: {
+    diameter: { xs: 50, md: 80 },
+  },
+};
 
 export default function MovieDetail() {
   const api = useAxios();
@@ -229,7 +248,10 @@ export default function MovieDetail() {
           <Skeleton
             id="poster-image"
             variant="rectangular"
-            sx={{ minWidth: 300 }}
+            sx={{
+              minWidth: { xs: 260, md: 300 },
+              height: { sx: 390, md: 450 },
+            }}
           ></Skeleton>
         )}
 
@@ -241,12 +263,15 @@ export default function MovieDetail() {
             height: "100%",
             color: grey[100],
             p: 3,
-            pr: 15,
+            pr: { xs: 8, md: 15 },
           }}
         >
           {/* Title */}
           {movieData ? (
-            <Typography variant={"h4"} sx={{ color: "inherit" }}>
+            <Typography
+              variant={"h4"}
+              sx={{ color: "inherit", fontSize: { xs: 24, md: 36 } }}
+            >
               {movieData.title}
             </Typography>
           ) : (
@@ -255,7 +280,10 @@ export default function MovieDetail() {
 
           {/* Release Date, Genres, Runtime */}
           {movieData ? (
-            <Typography variant={"subtitle2"} sx={{ color: grey[300] }}>
+            <Typography
+              variant={"subtitle2"}
+              sx={{ color: grey[300], ...styles.basicInfo }}
+            >
               {movieData.release_date &&
                 dateConverter(movieData.release_date, true)}
               {"  "}
@@ -263,7 +291,11 @@ export default function MovieDetail() {
               {movieData?.genres &&
                 movieData.genres.map(
                   ({ name }: { name: string }, index: number) => (
-                    <Typography key={index} component={"span"}>
+                    <Typography
+                      key={index}
+                      component={"span"}
+                      sx={styles.basicInfo}
+                    >
                       {" "}
                       {name}
                       {index < movieData.genres.length - 1 && ","}
@@ -271,7 +303,7 @@ export default function MovieDetail() {
                   )
                 )}{" "}
               &bull;{" "}
-              <Typography component={"span"}>
+              <Typography component={"span"} sx={styles.basicInfo}>
                 {movieData?.runtime && timeConverter(movieData.runtime)}
               </Typography>
             </Typography>
@@ -286,12 +318,12 @@ export default function MovieDetail() {
               <Box
                 sx={{
                   position: "relative",
-                  minWidth: 80,
-                  minHeight: 80,
-                  width: 80,
-                  height: 80,
-                  maxWidth: 80,
-                  maxHeight: 80,
+                  minWidth: styles.userScore.diameter,
+                  minHeight: styles.userScore.diameter,
+                  width: styles.userScore.diameter,
+                  height: styles.userScore.diameter,
+                  maxWidth: styles.userScore.diameter,
+                  maxHeight: styles.userScore.diameter,
                   display: "inline-flex",
                 }}
               >
@@ -299,7 +331,7 @@ export default function MovieDetail() {
                   sx={{
                     bgcolor: "black",
                     color: "white",
-                    fontSize: 24,
+                    fontSize: { xs: 18, md: 24 },
                     fontWeight: 700,
                     width: "100%",
                     height: "100%",
@@ -332,8 +364,8 @@ export default function MovieDetail() {
                   size="large"
                   onClick={handleTrailerOpen}
                   sx={{
-                    width: 180,
-                    height: 62,
+                    width: { xs: 150, md: 180 },
+                    height: { xs: 50, md: 62 },
                     display: "flex",
                     justifyContent: "space-between",
                     borderRadius: 10,
@@ -342,8 +374,13 @@ export default function MovieDetail() {
                     pr: 2,
                   }}
                 >
-                  <PlayCircleOutline sx={{ fontSize: 60 }} />
-                  <Typography variant="h6">Trailer</Typography>
+                  <PlayCircleOutline sx={{ fontSize: { xs: 48, md: 60 } }} />
+                  <Typography
+                    variant="h6"
+                    sx={{ fontSize: { xs: 18, md: 22 } }}
+                  >
+                    Trailer
+                  </Typography>
                 </Button>
               )
             ) : (
@@ -394,7 +431,7 @@ export default function MovieDetail() {
             <Typography
               component={"em"}
               variant={"subtitle1"}
-              sx={{ color: grey[400], fontSize: 18 }}
+              sx={{ color: grey[400], fontSize: { xs: 15, md: 18 } }}
             >
               {movieData?.tagline && movieData.tagline}
             </Typography>
@@ -404,20 +441,23 @@ export default function MovieDetail() {
 
           {/* Overview Label */}
           {movieData ? (
-            <Typography variant={"h5"}>Overview</Typography>
+            <Typography variant={"h5"} sx={{ fontSize: { xs: 20, md: 24 } }}>
+              Overview
+            </Typography>
           ) : (
             <Skeleton width={140} height={50}></Skeleton>
           )}
 
           {/* Overview */}
           {movieData ? (
-            <Typography variant={"body1"}>
+            <Typography variant={"body1"} sx={{ fontSize: { xs: 14, md: 16 } }}>
               {movieData?.overview && movieData.overview}
             </Typography>
           ) : (
             <Skeleton width={"95%"} height={150}></Skeleton>
           )}
 
+          {/* Main Crew */}
           <Stack
             direction="row"
             sx={{
@@ -437,10 +477,15 @@ export default function MovieDetail() {
                         mt: 2,
                       }}
                     >
-                      <Typography sx={{ fontWeight: 700 }}>
+                      <Typography
+                        sx={{ fontWeight: 700, fontSize: { xs: 14, md: 16 } }}
+                      >
                         {worker?.name}
                       </Typography>
-                      <Typography variant={"subtitle2"}>
+                      <Typography
+                        variant={"subtitle2"}
+                        sx={{ fontSize: { xs: 12, md: 14 } }}
+                      >
                         {worker?.job}
                       </Typography>
                     </Box>
@@ -464,7 +509,7 @@ export default function MovieDetail() {
           <Carousel
             responsive={responsiveCarousel}
             containerClass="carouselContainer"
-            slidesToSlide={5} // TODO: Change this to be responsive
+            // slidesToSlide={5} // TODO: Change this to be responsive
             customTransition="transform 750ms ease-in-out"
           >
             {movieDataCredits.cast.map((actor: ICast, index: number) => (
