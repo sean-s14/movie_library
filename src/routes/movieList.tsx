@@ -347,7 +347,11 @@ function App() {
 
   return (
     <RouteContainer
-      sx={{ flexDirection: "column", alignItems: "center", px: 5 }}
+      sx={{
+        flexDirection: "column",
+        alignItems: "center",
+        px: { xs: 2, md: 5 },
+      }}
     >
       {/* Filter Options */}
       <Collapse
@@ -358,7 +362,8 @@ function App() {
           backgroundColor: "rgba(33, 33, 33, 0.8)",
           mb: 2,
           borderRadius: 2,
-          width: "90%",
+          width: 600,
+          maxWidth: "95%",
         }}
       >
         <Stack
@@ -516,11 +521,11 @@ function App() {
 
       {/* Pagination, Sort & Filter */}
       <Stack
-        direction="row"
-        spacing={8}
+        direction={{ xs: "column", md: "row" }}
+        spacing={{ xs: 2, md: 8 }}
         sx={{
           height: 40,
-          mb: 5,
+          mb: { xs: 4, md: 0 },
         }}
       >
         {/* Pagination */}
@@ -585,7 +590,13 @@ function App() {
       </Stack>
 
       {/* Movie List */}
-      <Grid container spacing={2} rowSpacing={6} disableEqualOverflow>
+      <Grid
+        container
+        spacing={2}
+        rowSpacing={6}
+        disableEqualOverflow
+        sx={{ mt: 0 }}
+      >
         {movieDataIsFetching
           ? [...new Uint8Array(20)].map((num, index) => (
               <Grid
@@ -629,7 +640,7 @@ function App() {
                 xs475={6}
                 sm={6}
                 sm650={4}
-                sm750={4}
+                sm750={3}
                 md={3}
                 md1050={2.4}
                 xl={2}
@@ -651,7 +662,7 @@ function App() {
                   >
                     <Card
                       sx={{
-                        width: 185,
+                        width: { xs: 160, md: 185 },
                         borderRadius: "inherit",
                         backgroundColor: "rgba(0, 0, 0, 0)",
                       }}
@@ -660,11 +671,13 @@ function App() {
                         component="img"
                         src={`https://image.tmdb.org/t/p/w185/${movie.poster_path}`}
                         alt={movie.title}
-                        height={277}
+                        sx={{
+                          height: { xs: 240, md: 277 },
+                        }}
                       />
                       <CardContent
                         sx={{
-                          height: 130,
+                          height: { xs: 115, md: 130 },
                           color: grey[100],
                         }}
                         className="glassmorphism"
@@ -696,14 +709,22 @@ function App() {
                         />
                         <Typography
                           variant={"body1"}
-                          sx={{ mt: 1, color: "inherit", fontWeight: 700 }}
+                          sx={{
+                            mt: 1,
+                            color: "inherit",
+                            fontWeight: 700,
+                            fontSize: { xs: 14, md: 17 },
+                          }}
                           gutterBottom
                         >
                           {movie.title}
                         </Typography>
                         <Typography
                           variant={"subtitle2"}
-                          sx={{ color: grey[300] }}
+                          sx={{
+                            color: grey[300],
+                            fontSize: { xs: 12, md: 15 },
+                          }}
                         >
                           {movie.release_date &&
                             dateConverter(movie.release_date, true)}
