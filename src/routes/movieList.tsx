@@ -25,6 +25,7 @@ import {
   TextField,
   Divider,
   Tooltip,
+  useMediaQuery,
 } from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import { grey } from "@mui/material/colors";
@@ -114,6 +115,7 @@ interface IFilterObject {
 function App() {
   const queryClient = useQueryClient();
   const api = useAxios();
+  const mobile = useMediaQuery("(max-width:480px)");
   const [searchParams, setSearchParams] = useSearchParams();
   const [pageNum, setPageNum] = useState(1);
   const [sort, setSort] = useState("popularity.desc");
@@ -535,7 +537,7 @@ function App() {
           variant="outlined"
           shape="rounded"
           onChange={handlePageNum}
-          size="large"
+          size={mobile ? "medium" : "large"}
           siblingCount={0}
         />
 
@@ -637,7 +639,7 @@ function App() {
               <Grid
                 key={index}
                 xs={12}
-                xs475={6}
+                xs400={6}
                 sm={6}
                 sm650={4}
                 sm750={3}
@@ -744,6 +746,7 @@ function App() {
         page={pageNum}
         variant="outlined"
         shape="rounded"
+        size={mobile ? "medium" : "large"}
         onChange={handlePageNum}
       />
     </RouteContainer>

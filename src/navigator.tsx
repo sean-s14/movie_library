@@ -175,7 +175,9 @@ export default function Navigator() {
               style={{ marginLeft: 20, marginRight: 30, cursor: "pointer" }}
               onClick={() => navigate("/")}
             />
-            <Typography variant="h5">Sean's Movie Library</Typography>
+            <Typography variant="h1" sx={{ fontSize: { xs: 20, md: 28 } }}>
+              Sean's Movie Library
+            </Typography>
           </Box>
 
           {/* <Link to="/movies">Movies</Link> */}

@@ -12,8 +12,12 @@ declare module "@mui/material/styles" {
   interface BreakpointOverrides {
     xs: true;
     xs300: true;
+    xs350: true;
+    xs400: true;
     xs450: true;
     xs475: true;
+    xs500: true;
+    xs550: true;
     sm: true;
     sm650: true;
     sm750: true;
@@ -30,8 +34,12 @@ const darkTheme = createTheme({
     values: {
       xs: 0,
       xs300: 300,
+      xs350: 350,
+      xs400: 400,
       xs450: 450,
       xs475: 475,
+      xs500: 500,
+      xs550: 550,
       sm: 600,
       sm650: 650,
       sm750: 750,
