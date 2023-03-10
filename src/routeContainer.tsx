@@ -1,15 +1,17 @@
 import { Box } from "@mui/material";
 import tmdbLogo from "src/assets/tmdb_logo.svg";
+import { useMediaQuery } from "@mui/material";
 
 export default function RouteContainer(props: any) {
+  const mobile = useMediaQuery("(max-width:600px)");
   return (
     <Box
       sx={{
-        mt: "130px",
+        mt: `${mobile ? 70 : 130}px`,
         display: "flex",
         justifyContent: "center",
         py: 2,
-        minHeight: "calc(100vh - 130px)",
+        minHeight: `calc(100vh - ${mobile ? 0 : 60}px)`,
         /* fallback for old browsers */
         // background: "#0f2027",
         /* Chrome 10-25, Safari 5.1-6 */

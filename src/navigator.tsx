@@ -15,8 +15,15 @@ import {
   InputAdornment,
   Box,
   Tooltip,
+  IconButton,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  useMediaQuery,
 } from "@mui/material";
-import { Search } from "@mui/icons-material";
+import { Search, Menu } from "@mui/icons-material";
 import { grey } from "@mui/material/colors";
 import {
   useNavigate,
@@ -37,10 +44,16 @@ interface IGenres {
 export default function Navigator() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const mobile = useMediaQuery("(max-width: 600px)");
   const navigate = useNavigate();
   const api = useAxios();
   const [value, setValue] = useState<number | boolean>(0);
   const [searchText, setSearchText] = useState("");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  function handleDrawerOpen() {
+    setDrawerOpen((prev) => !prev);
+  }
 
   const { data: movieGenres }: any = useQuery({
     queryKey: ["movie", "genres"],
@@ -106,6 +119,14 @@ export default function Navigator() {
     return navigate("movies");
   }
 
+  function handleGenre(id: number) {
+    handleDrawerOpen();
+    return navigate({
+      pathname: "movies",
+      search: createSearchParams({ with_genres: id.toString() }).toString(),
+    });
+  }
+
   /** Navigates to /movies with ?query={searchText} as its parameters */
   function handleSearch() {
     return navigate({
@@ -153,7 +174,7 @@ export default function Navigator() {
       <AppBar
         component="nav"
         sx={{
-          height: 130,
+          height: mobile ? 70 : 130,
           display: "flex",
           justifyContent: "center",
         }}
@@ -162,17 +183,27 @@ export default function Navigator() {
           sx={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: { xs: "flex-start", sm: "space-between" },
             // justifyContent: { sm: "center" },
           }}
         >
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerOpen}
+            sx={{ ml: 1, display: { xs: "block", sm: "none" } }}
+          >
+            <Menu fontSize="large" />
+          </IconButton>
+
           {/* Title & Logo */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <img
               src={TMDB_LOGO}
               alt="TMDB Logo"
               height="30"
-              style={{ marginLeft: 20, marginRight: 30, cursor: "pointer" }}
+              style={{ paddingLeft: 20, paddingRight: 30, cursor: "pointer" }}
               onClick={() => navigate("/")}
             />
             <Typography variant="h1" sx={{ fontSize: { xs: 20, md: 28 } }}>
@@ -183,56 +214,95 @@ export default function Navigator() {
           {/* <Link to="/movies">Movies</Link> */}
 
           {/* Search Box */}
-          <Tooltip
-            title={
-              handleIsDiscover()
-                ? "Movies cannot be searched by name when using sort or filter"
-                : ""
-            }
-          >
-            <span>
-              <TextField
-                value={searchText}
-                onChange={handleSearchOnChange}
-                onKeyDown={handleKeyDown}
-                id="search-bar"
-                variant="outlined"
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment
-                      position="start"
-                      sx={{ cursor: "pointer" }}
-                      onClick={handleSearch}
-                    >
-                      <Search />
-                    </InputAdornment>
-                  ),
-                }}
-                size="small"
-                sx={{ background: grey[900] }}
-                disabled={handleIsDiscover()}
-              />
-            </span>
-          </Tooltip>
+          {!mobile && (
+            <Tooltip
+              title={
+                handleIsDiscover()
+                  ? "Movies cannot be searched by name when using sort or filter"
+                  : ""
+              }
+            >
+              <span>
+                <TextField
+                  value={searchText}
+                  onChange={handleSearchOnChange}
+                  onKeyDown={handleKeyDown}
+                  id="search-bar"
+                  variant="outlined"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment
+                        position="start"
+                        sx={{ cursor: "pointer" }}
+                        onClick={handleSearch}
+                      >
+                        <Search />
+                      </InputAdornment>
+                    ),
+                  }}
+                  size="small"
+                  sx={{
+                    background: grey[900],
+                    width: { xs: 200, sm: 250, md: 300 },
+                  }}
+                  disabled={handleIsDiscover()}
+                />
+              </span>
+            </Tooltip>
+          )}
         </Toolbar>
 
-        <Tabs
-          value={value}
-          onChange={handleTabChange}
-          variant="scrollable"
-          scrollButtons="auto"
-          aria-label="scrollable tabs for genres"
-          sx={{ height: 60 }}
-          TabIndicatorProps={{
-            style: { transition: "none" },
+        {!mobile && (
+          <Tabs
+            value={value}
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            aria-label="scrollable tabs for genres"
+            sx={{ height: 60 }}
+            TabIndicatorProps={{
+              style: { transition: "none" },
+            }}
+          >
+            <Tab label={"Discover"} value={0} />
+            {movieGenres?.genres?.map(
+              ({ id, name }: IGenres, index: number) => (
+                <Tab key={index} label={name} value={index + 1} />
+              )
+            )}
+          </Tabs>
+        )}
+      </AppBar>
+      <Box component="nav">
+        <Drawer
+          variant="temporary"
+          open={drawerOpen}
+          onClose={handleDrawerOpen}
+          ModalProps={{
+            keepMounted: true, // Better open performance on mobile.
+          }}
+          sx={{
+            display: { xs: "block", sm: "none" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: 200,
+            },
           }}
         >
-          <Tab label={"Discover"} value={0} />
-          {movieGenres?.genres?.map(({ id, name }: IGenres, index: number) => (
-            <Tab key={index} label={name} value={index + 1} />
-          ))}
-        </Tabs>
-      </AppBar>
+          <List sx={{ pb: 5 }}>
+            {movieGenres &&
+              movieGenres.genres?.map(
+                ({ id, name }: IGenres, index: number) => (
+                  <ListItem key={index} disablePadding>
+                    <ListItemButton onClick={() => handleGenre(id)}>
+                      <ListItemText primary={name} />
+                    </ListItemButton>
+                  </ListItem>
+                )
+              )}
+          </List>
+        </Drawer>
+      </Box>
 
       <Outlet />
     </>
