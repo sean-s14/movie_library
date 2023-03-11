@@ -20,6 +20,7 @@ declare module "@mui/material/styles" {
     xs550: true;
     sm: true;
     sm650: true;
+    sm700: true;
     sm750: true;
     md: true;
     md1050: true;
@@ -42,6 +43,7 @@ const darkTheme = createTheme({
       xs550: 550,
       sm: 600,
       sm650: 650,
+      sm700: 700,
       sm750: 750,
       md: 900,
       md1050: 1050,

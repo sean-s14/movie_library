@@ -57,6 +57,11 @@ const responsiveCarousel = {
     items: 2,
     slidesToSlide: 2,
   },
+  mobile2: {
+    breakpoint: { max: 500, min: 0 },
+    items: 1,
+    slidesToSlide: 1,
+  },
 };
 
 interface ICrew {
@@ -216,8 +221,9 @@ export default function MovieDetail() {
       <Box
         sx={{
           width: "100%",
-          height: 550,
+          height: "fit-content",
           display: "flex",
+          flexDirection: { xs: "column", sm700: "row" },
           position: "relative",
         }}
       >
@@ -502,15 +508,24 @@ export default function MovieDetail() {
       </Box>
 
       {/* Cast Carousel */}
-      <Box sx={{ width: "100%", p: 4 }}>
+      <Box
+        sx={{
+          // width: { xs: 200, xs500: "100%" },
+          width: "100%",
+          // p: 4,
+          // pl: "50%",
+          // ml: "auto",
+          // mr: "auto",
+        }}
+      >
         {movieDataCreditsIsFetching ? (
           <Typography>Fetching...</Typography>
         ) : (
           <Carousel
             responsive={responsiveCarousel}
             containerClass="carouselContainer"
-            // slidesToSlide={5} // TODO: Change this to be responsive
             customTransition="transform 750ms ease-in-out"
+            itemClass="carousel-item"
           >
             {movieDataCredits.cast.map((actor: ICast, index: number) => (
               <Paper

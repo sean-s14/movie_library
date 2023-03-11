@@ -4,6 +4,7 @@
   opacity: 0.3;
   object-fit: none;
   position: absolute;
+  top: 0;
 }
 
 #poster-image {
@@ -12,6 +13,17 @@
   height: 450px;
   border-radius: 10px;
   margin: auto 20px auto 20px;
+}
+
+@media screen and (max-width: 700px) {
+  #backdrop-image {
+    height: 320px;
+  }
+  #poster-image {
+    margin: 10px auto 10px auto !important;
+    max-width: 200px;
+    max-height: 300px;
+  }
 }
 
 @media only screen and (max-width: 900px) {
@@ -36,4 +48,10 @@
   height: 100%;
   border: none;
   border-radius: 8px;
+}
+
+.carousel-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
