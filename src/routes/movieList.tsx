@@ -577,8 +577,14 @@ function App() {
           </FormControl>
 
           {/* Filter */}
-          <Tooltip title="Movies cannot be filtered when using the search bar">
-            <span>
+          <Tooltip
+            title={
+              handleIsQuery()
+                ? "Movies cannot be filtered when using the search bar"
+                : ""
+            }
+          >
+            <span style={{ width: "fit-content" }}>
               <Button
                 variant="outlined"
                 onClick={handleFilterOpen}

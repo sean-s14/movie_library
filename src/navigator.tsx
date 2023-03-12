@@ -129,9 +129,15 @@ export default function Navigator() {
 
   /** Navigates to /movies with ?query={searchText} as its parameters */
   function handleSearch() {
+    let searchParams = null;
+    if (searchText === "") {
+      searchParams = createSearchParams({}).toString();
+    } else {
+      searchParams = createSearchParams({ query: searchText }).toString();
+    }
     return navigate({
       pathname: "movies",
-      search: createSearchParams({ query: searchText }).toString(),
+      search: searchParams,
     });
   }
 
@@ -156,17 +162,25 @@ export default function Navigator() {
   function handleIsDiscover() {
     let params = 0;
     let isQuery = false;
+
+    // Why?
     if (searchParams.get("query") !== null) {
       isQuery = true;
       params++;
     }
+
+    // Count number of parameters (except 'query' because that was done above)
     for (const [key, val] of searchParams.entries()) {
-      if (key === "query") continue;
+      if (key === "query" || key === "with_genres") continue;
       params++;
     }
+
+    // Disable component
     if ((!isQuery && params > 0) || (isQuery && params > 1)) {
       return true;
     }
+
+    return false;
   }
 
   return (
