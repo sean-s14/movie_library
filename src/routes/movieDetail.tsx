@@ -221,7 +221,7 @@ export default function MovieDetail() {
       <Box
         sx={{
           width: "100%",
-          height: "fit-content",
+          height: { xs: "fit-content", md1050: 550 },
           display: "flex",
           flexDirection: { xs: "column", sm700: "row" },
           position: "relative",
@@ -510,12 +510,7 @@ export default function MovieDetail() {
       {/* Cast Carousel */}
       <Box
         sx={{
-          // width: { xs: 200, xs500: "100%" },
           width: "100%",
-          // p: 4,
-          // pl: "50%",
-          // ml: "auto",
-          // mr: "auto",
         }}
       >
         {movieDataCreditsIsFetching ? (

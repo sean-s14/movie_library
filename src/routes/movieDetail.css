@@ -35,6 +35,18 @@
   }
 }
 
+@media only screen and (min-width: 900px) {
+  #backdrop-image {
+    height: 600px;
+  }
+}
+
+@media only screen and (min-width: 1150px) {
+  #backdrop-image {
+    height: 550px;
+  }
+}
+
 .carouselContainer {
   padding: 30px 20px;
   width: 90%;
